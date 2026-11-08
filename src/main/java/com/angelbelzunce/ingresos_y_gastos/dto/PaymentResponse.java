@@ -1,7 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.dto;
 
-import com.angelbelzunce.ingresos_y_gastos.entity.User;
-import com.angelbelzunce.ingresos_y_gastos.enums.Status;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 
 import java.math.BigDecimal;
@@ -13,7 +12,7 @@ public record PaymentResponse(
         String description,
         BigDecimal amount,
         LocalDateTime createdAt,
-        Status status,
+        PaymentStatus paymentStatus,
         TransactionType transactionType,
         Long userId,
         Long groupId

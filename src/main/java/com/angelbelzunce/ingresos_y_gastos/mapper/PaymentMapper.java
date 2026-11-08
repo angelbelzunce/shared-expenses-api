@@ -13,7 +13,7 @@ public class PaymentMapper {
         payment.setTitle(paymentRequest.title());
         payment.setDescription(paymentRequest.description());
         payment.setAmount(paymentRequest.amount());
-        payment.setStatus(paymentRequest.status());
+        payment.setPaymentStatus(paymentRequest.paymentStatus());
         payment.setTransactionType(paymentRequest.transactionType());
 
         return payment;
@@ -26,7 +26,7 @@ public class PaymentMapper {
                 payment.getDescription(),
                 payment.getAmount(),
                 payment.getCreatedAt(),
-                payment.getStatus(),
+                payment.getPaymentStatus(),
                 payment.getTransactionType(),
                 payment.getUser().getId(),
                 payment.getGroup().getId());

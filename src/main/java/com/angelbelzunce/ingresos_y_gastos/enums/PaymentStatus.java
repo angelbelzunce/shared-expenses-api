@@ -1,6 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.enums;
 
-public enum Status {
+public enum PaymentStatus {
     PENDING,
     PAID
 }
