@@ -1,6 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.enums;
 
-public enum Role {
+public enum UserRole {
     MEMBER,
     ADMIN
 }

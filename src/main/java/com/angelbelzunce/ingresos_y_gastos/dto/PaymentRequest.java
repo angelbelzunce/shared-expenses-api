@@ -1,6 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.dto;
 
-import com.angelbelzunce.ingresos_y_gastos.enums.Status;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import jakarta.validation.constraints.*;
 
@@ -17,7 +17,7 @@ public record PaymentRequest(
         @Digits(integer = 36, fraction = 2)
         BigDecimal amount,
         @NotNull
-        Status status,
+        PaymentStatus paymentStatus,
         @NotNull
         TransactionType transactionType,
         // TODO: take user from authentication

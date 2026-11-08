@@ -1,6 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.entity;
 
-import com.angelbelzunce.ingresos_y_gastos.enums.Status;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class Payment {
     @CreationTimestamp
     private LocalDateTime createdAt;
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private PaymentStatus paymentStatus;
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
     @ManyToOne(fetch = FetchType.LAZY)

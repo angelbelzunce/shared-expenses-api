@@ -3,11 +3,10 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupMemberResponse;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupResponse;
-import com.angelbelzunce.ingresos_y_gastos.dto.UserResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Group;
 import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
-import com.angelbelzunce.ingresos_y_gastos.enums.Role;
+import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
 import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.mapper.GroupMapper;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +68,7 @@ public class GroupServiceImpl implements GroupService {
         GroupMember groupMember = new GroupMember();
         groupMember.setGroup(savedGroup);
         groupMember.setUser(user);
-        groupMember.setRole(Role.ADMIN);
+        groupMember.setUserRole(UserRole.ADMIN);
 
         groupMemberRepository.save(groupMember);
 

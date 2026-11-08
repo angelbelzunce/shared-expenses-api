@@ -11,7 +11,7 @@ public class GroupMemberMapper {
         return new GroupMemberResponse(
                 groupMember.getUser().getId(),
                 groupMember.getUser().getName(),
-                groupMember.getRole(),
+                groupMember.getUserRole(),
                 groupMember.getJoinedAt());
     }
 }

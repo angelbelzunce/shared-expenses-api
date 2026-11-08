@@ -1,6 +1,6 @@
 package com.angelbelzunce.ingresos_y_gastos.entity;
 
-import com.angelbelzunce.ingresos_y_gastos.enums.Role;
+import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,7 +31,7 @@ public class GroupMember {
     private User user;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private UserRole userRole;
     @CreationTimestamp
     private LocalDateTime joinedAt;
 }

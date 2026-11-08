@@ -69,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setTitle(request.title());
         payment.setDescription(request.description());
         payment.setAmount(request.amount());
-        payment.setStatus(request.status());
+        payment.setPaymentStatus(request.paymentStatus());
         payment.setTransactionType(request.transactionType());
 
         // Save updated Payment and return response
