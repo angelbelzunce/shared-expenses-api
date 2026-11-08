@@ -3,6 +3,7 @@ package com.angelbelzunce.ingresos_y_gastos.controller;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +29,12 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> create(@RequestBody PaymentRequest request){
+    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody PaymentRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @RequestBody PaymentRequest request){
+    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @Valid @RequestBody PaymentRequest request){
         return ResponseEntity.ok(paymentService.update(id, request));
     }
 
