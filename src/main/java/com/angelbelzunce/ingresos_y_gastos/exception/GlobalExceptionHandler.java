@@ -31,6 +31,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotInGroupException.class)
     public ProblemDetail userNotInGroup(UserNotInGroupException ex){
-        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        ProblemDetail problemDetail =  ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("User not in group");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ProblemDetail emailAlreadyExists(EmailAlreadyExistsException ex){
+        ProblemDetail problemDetail =  ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Email already exists");
+        return problemDetail;
     }
 }

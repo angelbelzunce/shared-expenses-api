@@ -1,6 +1,5 @@
 package com.angelbelzunce.ingresos_y_gastos.entity;
 
-import com.angelbelzunce.ingresos_y_gastos.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
