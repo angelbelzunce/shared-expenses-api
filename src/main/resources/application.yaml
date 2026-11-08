@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: ingresos_y_gastos
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ingresos_y_gastos_db
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  config:
+    import:
+      optional:file:.env[.properties]
+

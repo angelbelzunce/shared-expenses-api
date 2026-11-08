@@ -1,0 +1,47 @@
+package com.angelbelzunce.ingresos_y_gastos.controller;
+
+import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
+import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
+import com.angelbelzunce.ingresos_y_gastos.service.PaymentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/payments")
+@RequiredArgsConstructor
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    @GetMapping
+    public ResponseEntity<List<PaymentResponse>> findAll() {
+        return ResponseEntity.ok(paymentService.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentResponse> findById(@PathVariable Long id){
+        return ResponseEntity.ok(paymentService.findById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<PaymentResponse> create(@RequestBody PaymentRequest request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @RequestBody PaymentRequest request){
+        return ResponseEntity.ok(paymentService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        paymentService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+}
