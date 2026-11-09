@@ -34,9 +34,9 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @Valid @RequestBody PaymentRequest request){
-        return ResponseEntity.ok(paymentService.update(id, request));
+    @PutMapping("/{id}")// TODO: use authentication user
+    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @RequestParam Long userId, @Valid @RequestBody PaymentRequest request){
+        return ResponseEntity.ok(paymentService.update(id, userId, request));
     }
 
     @DeleteMapping("/{id}")

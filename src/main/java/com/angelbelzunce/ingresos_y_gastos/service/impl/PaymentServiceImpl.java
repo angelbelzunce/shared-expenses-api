@@ -3,12 +3,11 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Group;
+import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
-import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.PaymentNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotInGroupException;
+import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
+import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentMapper;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -82,10 +82,22 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse update(Long id, PaymentRequest request) {
+    public PaymentResponse update(Long id, Long userId, PaymentRequest request) {
+
         // Look for payment to update
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFoundException(id));
+
+        boolean isPaymentCreator = userId.equals(payment.getUser().getId());
+
+        Optional<GroupMember> optionalMember = groupMemberRepository.findByGroupIdAndUserId(payment.getGroup().getId(), userId);
+        if (optionalMember.isEmpty()) throw new UserNotInGroupException(userId, payment.getGroup().getId());
+        boolean isAdmin = optionalMember.get().getUserRole().equals(UserRole.ADMIN);
+
+        if (!isPaymentCreator && !isAdmin){
+            throw new NotCreatorOrAdminException(userId);
+
+        }
 
         // Update payment
         payment.setTitle(request.title());

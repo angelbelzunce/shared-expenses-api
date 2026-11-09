@@ -12,7 +12,7 @@ public interface PaymentService {
     PaymentResponse findById(Long id);
     List<PaymentResponse> findByGroup(Long groupId, PaymentStatus paymentStatus);
     PaymentResponse create(PaymentRequest request);
-    PaymentResponse update(Long id, PaymentRequest request);
+    PaymentResponse update(Long id, Long userId, PaymentRequest request);
     void delete(Long id);
 
 }
