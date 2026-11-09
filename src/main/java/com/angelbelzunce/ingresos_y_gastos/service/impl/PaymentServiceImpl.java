@@ -45,6 +45,17 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public List<PaymentResponse> findByGroup(Long groupId) {
+        groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        return paymentRepository.findByGroupId(groupId)
+                .stream()
+                .map(paymentMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     public PaymentResponse create(PaymentRequest request) {
         Payment payment = paymentMapper.toEntity(request);
         User user = userRepository.findById(request.userId()).orElseThrow(() -> new UserNotFoundException(request.userId()));
