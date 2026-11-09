@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -54,6 +55,19 @@ public class GroupServiceImpl implements GroupService {
                 .stream()
                 .map(groupMemberMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GroupResponse> findGroups(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        return groupMemberRepository.findByUserId(userId)
+                .stream()
+                .map(groupMember -> groupMapper.toResponse(groupMember.getGroup()))
+                .toList();
+
     }
 
     @Override

@@ -11,6 +11,7 @@ public interface GroupService {
     List<GroupResponse> findAll();
     GroupResponse findById(Long id);
     List<GroupMemberResponse> findMembers(Long groupId);
+    List<GroupResponse> findGroups(Long userId);
     GroupResponse create(GroupRequest request);
     GroupResponse update(Long id, GroupRequest request);
     void delete(Long id);
