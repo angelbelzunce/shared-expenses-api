@@ -39,9 +39,9 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.update(id, userId, request));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        paymentService.delete(id);
+    @DeleteMapping("/{id}")// TODO: use authentication user
+    public ResponseEntity<Void> delete(@PathVariable Long id, @RequestParam Long userId){
+        paymentService.delete(id, userId);
         return ResponseEntity.noContent().build();
     }
 
