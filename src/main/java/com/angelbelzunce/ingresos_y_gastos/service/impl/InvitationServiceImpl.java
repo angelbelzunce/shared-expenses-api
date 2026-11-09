@@ -1,21 +1,20 @@
 package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
-import com.angelbelzunce.ingresos_y_gastos.dto.GroupInvitationRequest;
-import com.angelbelzunce.ingresos_y_gastos.dto.GroupInvitationResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.InvitationRequest;
+import com.angelbelzunce.ingresos_y_gastos.dto.InvitationResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Group;
-import com.angelbelzunce.ingresos_y_gastos.entity.GroupInvitation;
+import com.angelbelzunce.ingresos_y_gastos.entity.Invitation;
 import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
 import com.angelbelzunce.ingresos_y_gastos.enums.InvitationStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
-import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.mapper.GroupInvitationMapper;
-import com.angelbelzunce.ingresos_y_gastos.repository.GroupInvitationRepository;
+import com.angelbelzunce.ingresos_y_gastos.exception.*;
+import com.angelbelzunce.ingresos_y_gastos.mapper.InvitationMapper;
+import com.angelbelzunce.ingresos_y_gastos.repository.InvitationRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.GroupRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
-import com.angelbelzunce.ingresos_y_gastos.service.GroupInvitationService;
+import com.angelbelzunce.ingresos_y_gastos.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,19 +23,19 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class GroupInvitationServiceImpl implements GroupInvitationService {
+public class InvitationServiceImpl implements InvitationService {
 
-    private final GroupInvitationRepository invitationRepository;
+    private final InvitationRepository invitationRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
-    private final GroupInvitationMapper invitationMapper;
+    private final InvitationMapper invitationMapper;
 
 
     @Override
-    public GroupInvitationResponse create(GroupInvitationRequest request) {
+    public InvitationResponse create(InvitationRequest request) {
 
-        GroupInvitation invitation = new GroupInvitation();
+        Invitation invitation = new Invitation();
 
         Group group = groupRepository.findById(request.groupId())
                 .orElseThrow(() -> new GroupNotFoundException(request.groupId()));
@@ -56,7 +55,7 @@ public class GroupInvitationServiceImpl implements GroupInvitationService {
     }
 
     @Override
-    public List<GroupInvitationResponse> findMyPendingInvitations(Long userId) {
+    public List<InvitationResponse> findMyPendingInvitations(Long userId) {
         return invitationRepository.findByInvitedUserIdAndInvitationStatus(userId, InvitationStatus.PENDING)
                 .stream()
                 .map(invitationMapper::toResponse)
@@ -65,15 +64,15 @@ public class GroupInvitationServiceImpl implements GroupInvitationService {
 
     @Override
     @Transactional
-    public GroupInvitationResponse accept(Long invitationId, Long userId) {
-        GroupInvitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new RuntimeException()); // TODO: Create exception
+    public InvitationResponse accept(Long invitationId, Long userId) {
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new InvitationNotFoundException(invitationId));
 
         if (!invitation.getInvitedUser().getId().equals(userId)){
-            throw new RuntimeException();// TODO: Create exception
+            throw new NotInvitedUserException(userId);
         }
         if (invitation.getInvitationStatus() != InvitationStatus.PENDING){
-            throw new RuntimeException();// TODO: Create exception
+            throw new InvitationNotPendingException(invitationId);
         }
 
         invitation.setInvitationStatus(InvitationStatus.ACCEPTED);
@@ -88,15 +87,15 @@ public class GroupInvitationServiceImpl implements GroupInvitationService {
     }
 
     @Override
-    public GroupInvitationResponse reject(Long invitationId, Long userId) {
-        GroupInvitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new RuntimeException()); // TODO: Create exception
+    public InvitationResponse reject(Long invitationId, Long userId) {
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new InvitationNotFoundException(invitationId));
 
         if (!invitation.getInvitedUser().getId().equals(userId)){
-            throw new RuntimeException();// TODO: Create exception
+            throw new NotInvitedUserException(userId);
         }
         if (invitation.getInvitationStatus() != InvitationStatus.PENDING){
-            throw new RuntimeException();// TODO: Create exception
+            throw new InvitationNotPendingException(invitationId);
         }
 
         invitation.setInvitationStatus(InvitationStatus.REJECTED);
