@@ -10,5 +10,8 @@ import java.util.List;
 @Repository
 public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 
-    public List<Invitation> findByInvitedUserIdAndInvitationStatus(Long userId, InvitationStatus status);
+    List<Invitation> findByInvitedUserIdAndInvitationStatus(Long userId, InvitationStatus status);
+
+    boolean existsByGroupIdAndInvitedUserIdAndInvitationStatus(Long groupId, Long userId, InvitationStatus status);
+
 }
