@@ -4,6 +4,7 @@ import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Group;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.PaymentNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
@@ -45,22 +46,32 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentResponse> findByGroup(Long groupId) {
+    public List<PaymentResponse> findByGroup(Long groupId, PaymentStatus paymentStatus) {
         groupRepository.findById(groupId)
                 .orElseThrow(() -> new GroupNotFoundException(groupId));
 
-        return paymentRepository.findByGroupId(groupId)
-                .stream()
+        List<Payment> payments;
+
+        if (paymentStatus == null) {
+            payments = paymentRepository.findByGroupId(groupId);
+
+        } else {
+            payments = paymentRepository.findByGroupIdAndPaymentStatus(groupId, paymentStatus);
+
+        }
+
+        return payments.stream()
                 .map(paymentMapper::toResponse)
                 .toList();
     }
+
 
     @Override
     public PaymentResponse create(PaymentRequest request) {
         Payment payment = paymentMapper.toEntity(request);
         User user = userRepository.findById(request.userId()).orElseThrow(() -> new UserNotFoundException(request.userId()));
         Group group = groupRepository.findById(request.groupId()).orElseThrow(() -> new GroupNotFoundException(request.groupId()));
-        if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), request.userId())){
+        if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), request.userId())) {
             throw new UserNotInGroupException(user.getId(), group.getId());
         }
 
@@ -91,7 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public void delete(Long id) {
         Payment payment = paymentRepository.findById(id)
-                        .orElseThrow(() -> new PaymentNotFoundException(id));
+                .orElseThrow(() -> new PaymentNotFoundException(id));
 
         paymentRepository.delete(payment);
 
