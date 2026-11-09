@@ -4,6 +4,7 @@ import com.angelbelzunce.ingresos_y_gastos.dto.GroupMemberResponse;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupResponse;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.service.GroupService;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentService;
 import jakarta.validation.Valid;
@@ -38,8 +39,8 @@ public class GroupController {
     }
 
     @GetMapping("/{id}/payments")
-    public ResponseEntity<List<PaymentResponse>> findPayments(@PathVariable Long id){
-        return ResponseEntity.ok(paymentService.findByGroup(id));
+    public ResponseEntity<List<PaymentResponse>> findPayments(@PathVariable Long id, @RequestParam(required = false) PaymentStatus status) {
+        return ResponseEntity.ok(paymentService.findByGroup(id, status));
     }
 
     @PostMapping
