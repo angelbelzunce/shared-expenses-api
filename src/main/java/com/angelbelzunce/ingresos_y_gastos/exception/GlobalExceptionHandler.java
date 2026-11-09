@@ -86,5 +86,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(NotCreatorOrAdminException.class)
+    public ProblemDetail userIsNotAdminOrCreator(NotCreatorOrAdminException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("User is not the creator or an ADMIN");
+        return problemDetail;
+    }
+
 
 }
