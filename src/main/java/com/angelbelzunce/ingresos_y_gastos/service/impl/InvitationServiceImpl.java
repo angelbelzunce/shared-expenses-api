@@ -35,17 +35,38 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     public InvitationResponse create(InvitationRequest request) {
 
-        Invitation invitation = new Invitation();
-
+        // Guardamos el grupo al que pertenece la invitacion
         Group group = groupRepository.findById(request.groupId())
                 .orElseThrow(() -> new GroupNotFoundException(request.groupId()));
 
+        // Guardamos al usuario que invita
         User invitedBy = userRepository.findById(request.invitedById())
                 .orElseThrow(() -> new UserNotFoundException(request.invitedById()));
 
+        // Guardamos al usuario invitado
         User invitedUser = userRepository.findById(request.invitedUserId())
                 .orElseThrow(() -> new UserNotFoundException(request.invitedUserId()));
 
+        // Guardamos al miembro del grupo que invita
+        GroupMember invitedByMember = groupMemberRepository.findByGroupIdAndUserId(request.groupId(), request.invitedById())
+                .orElseThrow(() -> new UserNotInGroupException(invitedBy.getId(), group.getId()));
+        // Comprobamos si el usuario que invita es ADMIN
+        if (!invitedByMember.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsNotAdminException();
+        }
+
+        // Comprobamos que el usuario invitado no sea ya miembro del grupo
+        if(groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), request.invitedUserId())){
+            throw new InvitedUserAlreadyMemberException(request.groupId());
+        }
+
+        // Comprobamos que el ususario invitado no tenga invitaciones pendientes para el mismo grupo
+        if (invitationRepository.existsByGroupIdAndInvitedUserIdAndInvitationStatus(request.groupId(), request.invitedUserId(), InvitationStatus.PENDING)){
+            throw new InvitationAlreadyExistsException();
+        }
+
+
+        Invitation invitation = new Invitation();
         invitation.setGroup(group);
         invitation.setInvitedBy(invitedBy);
         invitation.setInvitedUser(invitedUser);

@@ -64,4 +64,27 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Invitation not pending");
         return problemDetail;
     }
+
+    @ExceptionHandler(InvitationAlreadyExistsException.class)
+    public ProblemDetail invitationAlreadyExists(InvitationAlreadyExistsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Invitation already exists");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvitedUserAlreadyMemberException.class)
+    public ProblemDetail invitedUserAlreadyMember(InvitedUserAlreadyMemberException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Invited user is already a member");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(UserIsNotAdminException.class)
+    public ProblemDetail userIsNotAdmin(UserIsNotAdminException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("User needs ADMIN role to invite");
+        return problemDetail;
+    }
+
+
 }
