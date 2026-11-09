@@ -13,6 +13,6 @@ public interface PaymentService {
     List<PaymentResponse> findByGroup(Long groupId, PaymentStatus paymentStatus);
     PaymentResponse create(PaymentRequest request);
     PaymentResponse update(Long id, Long userId, PaymentRequest request);
-    void delete(Long id);
+    void delete(Long id, Long userId);
 
 }

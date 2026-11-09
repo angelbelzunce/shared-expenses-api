@@ -88,16 +88,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFoundException(id));
 
-        boolean isPaymentCreator = userId.equals(payment.getUser().getId());
-
-        Optional<GroupMember> optionalMember = groupMemberRepository.findByGroupIdAndUserId(payment.getGroup().getId(), userId);
-        if (optionalMember.isEmpty()) throw new UserNotInGroupException(userId, payment.getGroup().getId());
-        boolean isAdmin = optionalMember.get().getUserRole().equals(UserRole.ADMIN);
-
-        if (!isPaymentCreator && !isAdmin){
-            throw new NotCreatorOrAdminException(userId);
-
-        }
+        checkCanModify(payment, userId);
 
         // Update payment
         payment.setTitle(request.title());
@@ -112,11 +103,26 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(Long id, Long userId) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFoundException(id));
 
+        checkCanModify(payment, userId);
+
         paymentRepository.delete(payment);
 
+    }
+
+    private void checkCanModify(Payment payment, Long userId ){
+        boolean isPaymentCreator = userId.equals(payment.getUser().getId());
+
+        Optional<GroupMember> optionalMember = groupMemberRepository.findByGroupIdAndUserId(payment.getGroup().getId(), userId);
+        if (optionalMember.isEmpty()) throw new UserNotInGroupException(userId, payment.getGroup().getId());
+        boolean isAdmin = optionalMember.get().getUserRole().equals(UserRole.ADMIN);
+
+        if (!isPaymentCreator && !isAdmin){
+            throw new NotCreatorOrAdminException(userId);
+
+        }
     }
 }
