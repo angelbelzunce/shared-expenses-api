@@ -4,7 +4,7 @@ import com.angelbelzunce.ingresos_y_gastos.enums.InvitationStatus;
 
 import java.time.LocalDateTime;
 
-public record GroupInvitationResponse(
+public record InvitationResponse(
         Long id,
         Long groupId,
         Long invitedUserId,
