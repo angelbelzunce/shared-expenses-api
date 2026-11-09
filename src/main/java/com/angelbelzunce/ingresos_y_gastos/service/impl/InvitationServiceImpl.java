@@ -124,5 +124,4 @@ public class InvitationServiceImpl implements InvitationService {
         return invitationMapper.toResponse(invitationRepository.save(invitation));
     }
 
-
 }

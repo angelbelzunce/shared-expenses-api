@@ -3,7 +3,9 @@ package com.angelbelzunce.ingresos_y_gastos.controller;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupMemberResponse;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.GroupResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
 import com.angelbelzunce.ingresos_y_gastos.service.GroupService;
+import com.angelbelzunce.ingresos_y_gastos.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
+    private final PaymentService paymentService;
 
     @GetMapping
     public ResponseEntity<List<GroupResponse>> findAll() {
@@ -32,6 +35,11 @@ public class GroupController {
     @GetMapping("/{id}/members")
     public ResponseEntity<List<GroupMemberResponse>> findMembers(@PathVariable Long id) {
         return ResponseEntity.ok(groupService.findMembers(id));
+    }
+
+    @GetMapping("/{id}/payments")
+    public ResponseEntity<List<PaymentResponse>> findPayments(@PathVariable Long id){
+        return ResponseEntity.ok(paymentService.findByGroup(id));
     }
 
     @PostMapping
