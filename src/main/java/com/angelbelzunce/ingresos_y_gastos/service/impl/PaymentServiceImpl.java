@@ -186,7 +186,8 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentShare paymentShareCreator = new PaymentShare();
         paymentShareCreator.setPayment(savedPayment);
         paymentShareCreator.setUser(payment.getUser());
-        paymentShareCreator.setAmount(shareAmount);
+        BigDecimal amountShareCreator = request.amount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
+        paymentShareCreator.setAmount(amountShareCreator);
         paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
         paymentShareCreator.setPaidAt(LocalDateTime.now());
         shareRepository.save(paymentShareCreator);
