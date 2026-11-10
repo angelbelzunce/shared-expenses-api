@@ -10,4 +10,6 @@ public interface PaymentShareService {
     List<PaymentShareResponse> findByPaymentId(Long paymentId);
 
     PaymentShareResponse findByPaymentIdAndUserId(Long paymentId, Long userId);
+
+    void deleteByPaymentId(Long paymentId);
 }

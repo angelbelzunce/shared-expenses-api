@@ -3,6 +3,7 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.exception.PaymentNotFoundException;
+import com.angelbelzunce.ingresos_y_gastos.exception.PaymentShareNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentShareMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
@@ -39,6 +40,14 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
         return paymentShareMapper.toResponse(paymentShareRepository.findByPaymentIdAndUserId(paymentId, userId)
-                .orElseThrow(() -> new RuntimeException())); // TODO: Create exception
+                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, userId)));
+    }
+
+    @Override
+    public void deleteByPaymentId(Long paymentId) {
+        paymentRepository.findById(paymentId)
+                        .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        paymentShareRepository.deleteByPaymentId(paymentId);
     }
 }

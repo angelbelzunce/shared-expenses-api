@@ -17,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -70,15 +72,30 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse create(PaymentRequest request) {
 
-        if (request.shareUsersId().contains(request.userId())){
-            throw new CreatorInShareUsersException(); //TODO: create Exception
+        if (request.shareUsersId().contains(request.userId())) {
+            throw new CreatorInShareUsersException();
+        }
+
+        Set<Long> shareUserSet = new HashSet<>(request.shareUsersId());
+
+        if (request.shareUsersId().size() != shareUserSet.size()) {
+            throw new DuplicatedShareUserException();
         }
 
         Payment payment = paymentMapper.toEntity(request);
+
         User user = userRepository.findById(request.userId()).orElseThrow(() -> new UserNotFoundException(request.userId()));
+
         Group group = groupRepository.findById(request.groupId()).orElseThrow(() -> new GroupNotFoundException(request.groupId()));
+
         if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), request.userId())) {
             throw new UserNotInGroupException(user.getId(), group.getId());
+        }
+
+        for (Long shareUserId : request.shareUsersId()){
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)){
+                throw new UserNotInGroupException(shareUserId, group.getId());
+            }
         }
 
         payment.setUser(user);
@@ -102,23 +119,41 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentShare paymentShareCreator = new PaymentShare();
         paymentShareCreator.setPayment(saved);
         paymentShareCreator.setUser(user);
-        paymentShareCreator.setAmount(shareAmount);
+        BigDecimal amountShareCreator = request.amount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
+        paymentShareCreator.setAmount(amountShareCreator);
         paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
         paymentShareCreator.setPaidAt(LocalDateTime.now());
         shareRepository.save(paymentShareCreator);
-
 
         return paymentMapper.toResponse(payment);
 
     }
 
     @Override
+    @Transactional
     public PaymentResponse update(Long id, Long userId, PaymentRequest request) {
 
         // Look for payment to update
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFoundException(id));
 
+        if (request.shareUsersId().contains(request.userId())) {
+            throw new CreatorInShareUsersException();
+        }
+
+        Set<Long> shareUserSet = new HashSet<>(request.shareUsersId());
+
+        if (request.shareUsersId().size() != shareUserSet.size()) {
+            throw new DuplicatedShareUserException();
+        }
+
+        for (Long shareUserId : request.shareUsersId()){
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)){
+                throw new UserNotInGroupException(shareUserId, request.groupId());
+            }
+        }
+
+        // Check if updater is creator or ADMIN
         checkCanModify(payment, userId);
 
         // Update payment
@@ -127,15 +162,44 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setAmount(request.amount());
         payment.setTransactionType(request.transactionType());
 
-        // Save updated Payment and return response
-        return paymentMapper.toResponse(paymentRepository.save(payment));
+        Payment savedPayment = paymentRepository.save(payment);
 
+        // Calculate new share amount
+        int shareUsers = request.shareUsersId().size() + 1;
+        BigDecimal shareAmount = request.amount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+
+        // Delete old payments share
+        shareRepository.deleteByPaymentId(payment.getId());
+        shareRepository.flush();
+
+        // Create new payment shares from request
+        PaymentShare paymentShare;
+        for (Long shareUserId : request.shareUsersId()) {
+            paymentShare = new PaymentShare();
+            paymentShare.setPayment(savedPayment);
+            paymentShare.setUser(userRepository.findById(shareUserId).orElseThrow(() -> new UserNotFoundException(shareUserId)));
+            paymentShare.setAmount(shareAmount);
+            paymentShare.setStatus(ShareStatus.PENDING);
+            shareRepository.save(paymentShare);
+        }
+
+        PaymentShare paymentShareCreator = new PaymentShare();
+        paymentShareCreator.setPayment(savedPayment);
+        paymentShareCreator.setUser(payment.getUser());
+        paymentShareCreator.setAmount(shareAmount);
+        paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
+        paymentShareCreator.setPaidAt(LocalDateTime.now());
+        shareRepository.save(paymentShareCreator);
+
+        // Save updated Payment and return response
+        return paymentMapper.toResponse(savedPayment);
     }
 
     @Override
-    public void delete(Long id, Long userId) {
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new PaymentNotFoundException(id));
+    public void delete(Long paymentId, Long userId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
         checkCanModify(payment, userId);
 
@@ -144,10 +208,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void checkCanModify(Payment payment, Long userId) {
+
         boolean isPaymentCreator = userId.equals(payment.getUser().getId());
 
         Optional<GroupMember> optionalMember = groupMemberRepository.findByGroupIdAndUserId(payment.getGroup().getId(), userId);
+
         if (optionalMember.isEmpty()) throw new UserNotInGroupException(userId, payment.getGroup().getId());
+
         boolean isAdmin = optionalMember.get().getUserRole().equals(UserRole.ADMIN);
 
         if (!isPaymentCreator && !isAdmin) {

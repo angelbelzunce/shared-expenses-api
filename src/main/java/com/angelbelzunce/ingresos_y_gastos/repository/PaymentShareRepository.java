@@ -13,4 +13,6 @@ public interface PaymentShareRepository extends JpaRepository<PaymentShare, Long
     List<PaymentShare> findByPaymentId(Long paymentId);
 
     Optional<PaymentShare> findByPaymentIdAndUserId(Long paymentId, Long userId);
+
+    void deleteByPaymentId(Long paymentId);
 }

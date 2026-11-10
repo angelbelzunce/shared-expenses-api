@@ -4,10 +4,7 @@ import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,4 +23,13 @@ public class PaymentShareController {
     public ResponseEntity<PaymentShareResponse> findByPaymentIdAndUserId(@PathVariable Long paymentId, @PathVariable Long userId){
         return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
     }
+    /*
+
+    @DeleteMapping
+    public ResponseEntity<PaymentShareResponse> deleteByPaymentId(@PathVariable Long paymentId){
+        paymentShareService.deleteByPaymentId(paymentId);
+        return ResponseEntity.noContent().build();
+    }
+
+     */
 }
