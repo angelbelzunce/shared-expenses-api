@@ -100,7 +100,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setUser(user);
         payment.setGroup(group);
-        payment.setPaymentStatus(PaymentStatus.PENDING);
+        if (request.shareUsersId().isEmpty()){
+            payment.setPaymentStatus(PaymentStatus.PAID);
+        } else {
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+        }
         Payment saved = paymentRepository.save(payment);
 
         int shareUsers = request.shareUsersId().size() + 1;
@@ -161,6 +165,12 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setDescription(request.description());
         payment.setAmount(request.amount());
         payment.setTransactionType(request.transactionType());
+
+        if (request.shareUsersId().isEmpty()){
+            payment.setPaymentStatus(PaymentStatus.PAID);
+        } else {
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+        }
 
         Payment savedPayment = paymentRepository.save(payment);
 
