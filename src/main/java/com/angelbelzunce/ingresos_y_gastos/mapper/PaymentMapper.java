@@ -13,7 +13,6 @@ public class PaymentMapper {
         payment.setTitle(paymentRequest.title());
         payment.setDescription(paymentRequest.description());
         payment.setAmount(paymentRequest.amount());
-        payment.setPaymentStatus(paymentRequest.paymentStatus());
         payment.setTransactionType(paymentRequest.transactionType());
 
         return payment;

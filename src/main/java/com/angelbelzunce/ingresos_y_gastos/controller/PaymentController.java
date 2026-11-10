@@ -28,7 +28,6 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.findById(id));
     }
 
-
     @PostMapping
     public ResponseEntity<PaymentResponse> create(@Valid @RequestBody PaymentRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request));

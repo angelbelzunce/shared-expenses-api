@@ -93,5 +93,11 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(CreatorInShareUsersException.class)
+    public ProblemDetail creatorInShareUsers(CreatorInShareUsersException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("The creator cannot be included in share users");
+        return problemDetail;
+    }
 
 }
