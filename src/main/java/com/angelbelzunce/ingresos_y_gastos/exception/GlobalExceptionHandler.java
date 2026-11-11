@@ -139,4 +139,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         problemDetail.setTitle("Payment share not found");
         return problemDetail;
     }
+
+    @ExceptionHandler(IsNotShareCreatorException.class)
+    public ProblemDetail notShareCreator(IsNotShareCreatorException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Not creator user");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(IsNotShareOwnerException.class)
+    public ProblemDetail notShareCreator(IsNotShareOwnerException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Not owner user");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(NotPendingShareException.class)
+    public ProblemDetail notShareCreator(NotPendingShareException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Share status is not pending");
+        return problemDetail;
+    }
 }

@@ -25,8 +25,8 @@ public class PaymentShareController {
         return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
     }
 
-    @PutMapping("/{userId}")
-    public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId, @PathVariable Long userId){
-        return ResponseEntity.status(HttpStatus.OK).body(paymentShareService.settle(paymentId, userId));
+    @PutMapping("/{shareUserId}")
+    public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId, @PathVariable Long shareUserId, @RequestParam Long userId){
+        return ResponseEntity.status(HttpStatus.OK).body(paymentShareService.settle(paymentId, shareUserId, userId));
     }
 }

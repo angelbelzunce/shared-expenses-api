@@ -1,11 +1,11 @@
 package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
+import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
-import com.angelbelzunce.ingresos_y_gastos.exception.PaymentNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.PaymentShareNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
+import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
+import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentShareMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
@@ -46,14 +46,30 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public PaymentShareResponse settle(Long paymentId, Long userId) {
+    public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId) {
 
-        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, userId)
-                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, userId));
+        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
+                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
 
-        if (!paymentShare.getStatus().equals(ShareStatus.PENDING)){
-            throw new RuntimeException(); //TODO: Create Exception
+        if (!paymentShare.getStatus().equals(ShareStatus.PENDING)) {
+            throw new NotPendingShareException(paymentShare.getId());
         }
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
+        boolean isCreator = payment.getUser().getId().equals(userId);
+        boolean isShareOfUser = paymentShare.getUser().getId().equals(userId);
+
+        if (isIncome && !isCreator) {
+            throw new IsNotShareCreatorException(userId);
+        }
+
+        if (!isIncome && !isShareOfUser) {
+            throw new IsNotShareOwnerException(userId);
+        }
+
         paymentShare.setStatus(ShareStatus.SETTLED);
         paymentShare.setPaidAt(LocalDateTime.now());
 

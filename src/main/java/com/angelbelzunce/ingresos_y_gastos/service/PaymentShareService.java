@@ -10,5 +10,5 @@ public interface PaymentShareService {
 
     PaymentShareResponse findByPaymentIdAndUserId(Long paymentId, Long userId);
 
-    PaymentShareResponse settle(Long paymentId, Long userId);
+    PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId);
 }
