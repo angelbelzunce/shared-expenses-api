@@ -108,7 +108,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     @ExceptionHandler(UserIsNotAdminException.class)
     public ProblemDetail userIsNotAdmin(UserIsNotAdminException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
-        problemDetail.setTitle("User needs ADMIN role to this feature");
+        problemDetail.setTitle("This action requires the ADMIN role");
         return problemDetail;
     }
 
@@ -148,14 +148,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     }
 
     @ExceptionHandler(IsNotShareOwnerException.class)
-    public ProblemDetail notShareCreator(IsNotShareOwnerException ex) {
+    public ProblemDetail notShareOwner(IsNotShareOwnerException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
         problemDetail.setTitle("Not owner user");
         return problemDetail;
     }
 
     @ExceptionHandler(NotPendingShareException.class)
-    public ProblemDetail notShareCreator(NotPendingShareException ex) {
+    public ProblemDetail notPendingShare(NotPendingShareException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problemDetail.setTitle("Share status is not pending");
         return problemDetail;

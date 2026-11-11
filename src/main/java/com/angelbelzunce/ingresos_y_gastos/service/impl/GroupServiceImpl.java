@@ -107,7 +107,7 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new GroupNotFoundException(id));
 
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndUserId(id, userId)
