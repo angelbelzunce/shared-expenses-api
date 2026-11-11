@@ -108,7 +108,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     @ExceptionHandler(UserIsNotAdminException.class)
     public ProblemDetail userIsNotAdmin(UserIsNotAdminException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
-        problemDetail.setTitle("User needs ADMIN role to invite");
+        problemDetail.setTitle("User needs ADMIN role to this feature");
         return problemDetail;
     }
 

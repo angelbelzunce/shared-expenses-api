@@ -54,8 +54,8 @@ public class GroupController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        groupService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, @RequestParam Long userId) {
+        groupService.delete(id, userId);
         return ResponseEntity.noContent().build();
     }
 

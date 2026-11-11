@@ -14,5 +14,5 @@ public interface GroupService {
     List<GroupResponse> findGroups(Long userId);
     GroupResponse create(GroupRequest request);
     GroupResponse update(Long id, GroupRequest request);
-    void delete(Long id);
+    void delete(Long id, Long userId);
 }
