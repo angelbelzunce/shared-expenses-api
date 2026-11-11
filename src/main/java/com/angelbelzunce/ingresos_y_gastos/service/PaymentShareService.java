@@ -12,6 +12,10 @@ public interface PaymentShareService {
 
     PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId);
 
-    PaymentShareResponse confirmOrRejectSettle(Long paymentId, Long shareUserId, Long userId, boolean isConfirming);
+    PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId);
+
+    PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long userId);
+
+    PaymentShareResponse undoConfirmedShare(Long paymnetId, Long shareUserId, Long userId);
 
 }

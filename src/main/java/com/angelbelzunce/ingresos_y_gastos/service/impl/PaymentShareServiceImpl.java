@@ -48,6 +48,9 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     @Override
     public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId) {
 
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
 
@@ -55,10 +58,6 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         if (!paymentShare.getStatus().equals(ShareStatus.PENDING)) {
             throw new NotPendingShareException(paymentShare.getId());
         }
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
-
 
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
         boolean isCreator = payment.getUser().getId().equals(userId);
@@ -74,7 +73,6 @@ public class PaymentShareServiceImpl implements PaymentShareService {
             throw new IsNotShareOwnerException(userId);
         }
 
-
         paymentShare.setStatus(ShareStatus.SETTLED);
         paymentShare.setPaidAt(LocalDateTime.now());
 
@@ -82,19 +80,71 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public PaymentShareResponse confirmOrRejectSettle(Long paymentId, Long shareUserId, Long userId, boolean isConfirming) {
-
-        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
-                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
-
-        // If share has not PENDING status, cannot confirm it
-        if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
-            throw new NotPendingShareException(paymentShare.getId());
-        }
+    public PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long userId) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+
+        // If share has not SETTLED status, cannot reject it
+        if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
+            throw new NotPendingShareException(paymentShare.getId());
+        }
+
+        paymentShare.setStatus(ShareStatus.PENDING);
+
+        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+
+    }
+
+    @Override
+    public PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+
+        // If share has not SETTLED status, cannot confirm it
+        if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
+            throw new NotPendingShareException(paymentShare.getId());
+        }
+
+        paymentShare.setStatus(ShareStatus.CONFIRMED);
+
+        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+
+    }
+
+    @Override
+    public PaymentShareResponse undoConfirmedShare(Long paymentId, Long shareUserId, Long userId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+
+        if (payment.getUser().getId().equals(shareUserId)){
+            throw new UserCannotUndoTheirShare(userId);
+        }
+
+        // If share has not CONFIRMED status, cannot undo it
+        if (!paymentShare.getStatus().equals(ShareStatus.CONFIRMED)) {
+            throw new NotPendingShareException(paymentShare.getId());
+        }
+
+        paymentShare.setStatus(ShareStatus.PENDING);
+
+        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+
+    }
+
+
+    private PaymentShare getPaymentShare(Payment payment, Long shareUserId, Long userId) {
+
+        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUserId)
+                .orElseThrow(() -> new PaymentShareNotFoundException(payment.getId(), shareUserId));
 
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
         boolean isPaymentCreator = payment.getUser().getId().equals(userId);
@@ -109,15 +159,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         if (isIncome && !isShareOfUser) {
             throw new IsNotShareOwnerException(userId);
         }
-
-        if (isConfirming){
-            paymentShare.setStatus(ShareStatus.CONFIRMED);
-        } else {
-            paymentShare.setStatus(ShareStatus.PENDING);
-        }
-
-
-        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
-
+        return paymentShare;
     }
+
 }

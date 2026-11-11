@@ -168,4 +168,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return problemDetail;
     }
 
+    @ExceptionHandler(UserCannotUndoTheirShare.class)
+    public ProblemDetail cannotUndoTheirShare(UserCannotUndoTheirShare ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("The creator cannot undo their own confirmed share");
+        return problemDetail;
+    }
 }

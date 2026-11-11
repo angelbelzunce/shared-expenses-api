@@ -30,7 +30,7 @@ public class PaymentShareController {
         return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
     }
 
-    @PutMapping("/{shareUserId}/settle")
+    @PatchMapping("/{shareUserId}/settle")
     public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId,
                                                        @PathVariable Long shareUserId,
                                                        @RequestParam Long userId) {
@@ -39,13 +39,33 @@ public class PaymentShareController {
                 .body(paymentShareService.settle(paymentId, shareUserId, userId));
     }
 
-    @PutMapping("/{shareUserId}/{isConfirming}")
+    @PatchMapping("/{shareUserId}/confirm")
     public ResponseEntity<PaymentShareResponse> confirm(@PathVariable Long paymentId,
                                                         @PathVariable Long shareUserId,
-                                                        @RequestParam Long userId,
-                                                        @PathVariable boolean isConfirming) {
+                                                        @RequestParam Long userId
+                                                        ) {
 
         return ResponseEntity.status(HttpStatus.OK).
-                body(paymentShareService.confirmOrRejectSettle(paymentId, shareUserId, userId, isConfirming));
+                body(paymentShareService.confirmSettle(paymentId, shareUserId, userId));
+    }
+
+    @PatchMapping("/{shareUserId}/reject")
+    public ResponseEntity<PaymentShareResponse> reject(@PathVariable Long paymentId,
+                                                        @PathVariable Long shareUserId,
+                                                        @RequestParam Long userId
+    ) {
+
+        return ResponseEntity.status(HttpStatus.OK).
+                body(paymentShareService.rejectSettle(paymentId, shareUserId, userId));
+    }
+
+    @PatchMapping("/{shareUserId}/undo")
+    public ResponseEntity<PaymentShareResponse> undo(@PathVariable Long paymentId,
+                                                       @PathVariable Long shareUserId,
+                                                       @RequestParam Long userId
+    ) {
+
+        return ResponseEntity.status(HttpStatus.OK).
+                body(paymentShareService.undoConfirmedShare(paymentId, shareUserId, userId));
     }
 }

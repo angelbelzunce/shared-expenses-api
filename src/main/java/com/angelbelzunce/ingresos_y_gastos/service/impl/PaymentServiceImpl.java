@@ -164,7 +164,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         shares.forEach(paymentShare -> {
             if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(userId))
-                throw new RuntimeException();//TODO create Exception
+                throw new PaymentWithNotPendingSharesException(payment.getId());
         });
 
         // Update payment
