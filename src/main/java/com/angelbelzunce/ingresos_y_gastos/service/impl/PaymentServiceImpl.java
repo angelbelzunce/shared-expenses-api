@@ -92,15 +92,15 @@ public class PaymentServiceImpl implements PaymentService {
             throw new UserNotInGroupException(user.getId(), group.getId());
         }
 
-        for (Long shareUserId : request.shareUsersId()){
-            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)){
+        for (Long shareUserId : request.shareUsersId()) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)) {
                 throw new UserNotInGroupException(shareUserId, group.getId());
             }
         }
 
         payment.setUser(user);
         payment.setGroup(group);
-        if (request.shareUsersId().isEmpty()){
+        if (request.shareUsersId().isEmpty()) {
             payment.setPaymentStatus(PaymentStatus.PAID);
         } else {
             payment.setPaymentStatus(PaymentStatus.PENDING);
@@ -151,8 +151,8 @@ public class PaymentServiceImpl implements PaymentService {
             throw new DuplicatedShareUserException();
         }
 
-        for (Long shareUserId : request.shareUsersId()){
-            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)){
+        for (Long shareUserId : request.shareUsersId()) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)) {
                 throw new UserNotInGroupException(shareUserId, request.groupId());
             }
         }
@@ -160,13 +160,20 @@ public class PaymentServiceImpl implements PaymentService {
         // Check if updater is creator or ADMIN
         checkCanModify(payment, userId);
 
+        List<PaymentShare> shares = shareRepository.findByPaymentId(payment.getId());
+
+        shares.forEach(paymentShare -> {
+            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(userId))
+                throw new RuntimeException();//TODO create Exception
+        });
+
         // Update payment
         payment.setTitle(request.title());
         payment.setDescription(request.description());
         payment.setAmount(request.amount());
         payment.setTransactionType(request.transactionType());
 
-        if (request.shareUsersId().isEmpty()){
+        if (request.shareUsersId().isEmpty()) {
             payment.setPaymentStatus(PaymentStatus.PAID);
         } else {
             payment.setPaymentStatus(PaymentStatus.PENDING);
@@ -213,6 +220,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
         checkCanModify(payment, userId);
+
+        List<PaymentShare> shares = shareRepository.findByPaymentId(paymentId);
+
+        shares.forEach(paymentShare -> {
+            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(userId))
+                throw new RuntimeException();//TODO create Exception
+        });
 
         paymentRepository.delete(payment);
 

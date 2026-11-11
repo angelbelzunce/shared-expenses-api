@@ -2,6 +2,7 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
+import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.exception.PaymentNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.PaymentShareNotFoundException;
 import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
@@ -13,6 +14,7 @@ import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -44,10 +46,17 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public void deleteByPaymentId(Long paymentId) {
-        paymentRepository.findById(paymentId)
-                        .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+    public PaymentShareResponse settle(Long paymentId, Long userId) {
 
-        paymentShareRepository.deleteByPaymentId(paymentId);
+        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, userId)
+                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, userId));
+
+        if (!paymentShare.getStatus().equals(ShareStatus.PENDING)){
+            throw new RuntimeException(); //TODO: Create Exception
+        }
+        paymentShare.setStatus(ShareStatus.SETTLED);
+        paymentShare.setPaidAt(LocalDateTime.now());
+
+        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
     }
 }

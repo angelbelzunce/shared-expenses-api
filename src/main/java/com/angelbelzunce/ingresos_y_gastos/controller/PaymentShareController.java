@@ -3,6 +3,7 @@ package com.angelbelzunce.ingresos_y_gastos.controller;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,13 +24,9 @@ public class PaymentShareController {
     public ResponseEntity<PaymentShareResponse> findByPaymentIdAndUserId(@PathVariable Long paymentId, @PathVariable Long userId){
         return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
     }
-    /*
 
-    @DeleteMapping
-    public ResponseEntity<PaymentShareResponse> deleteByPaymentId(@PathVariable Long paymentId){
-        paymentShareService.deleteByPaymentId(paymentId);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{userId}")
+    public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId, @PathVariable Long userId){
+        return ResponseEntity.status(HttpStatus.OK).body(paymentShareService.settle(paymentId, userId));
     }
-
-     */
 }
