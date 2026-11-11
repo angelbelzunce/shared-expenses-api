@@ -8,7 +8,9 @@ import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
 import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
 import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
+import com.angelbelzunce.ingresos_y_gastos.exception.UserIsNotAdminException;
 import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
+import com.angelbelzunce.ingresos_y_gastos.exception.UserNotInGroupException;
 import com.angelbelzunce.ingresos_y_gastos.mapper.GroupMapper;
 import com.angelbelzunce.ingresos_y_gastos.mapper.GroupMemberMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
@@ -100,9 +102,20 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(Long id, Long userId) {
+
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new GroupNotFoundException(id));
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        GroupMember groupMember = groupMemberRepository.findByGroupIdAndUserId(id, userId)
+                .orElseThrow(() -> new UserNotInGroupException(userId, id));
+
+        if (!groupMember.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsNotAdminException();
+        }
 
         groupRepository.delete(group);
     }

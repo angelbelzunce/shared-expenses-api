@@ -5,6 +5,7 @@ import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record PaymentRequest(
         @NotBlank
@@ -17,14 +18,14 @@ public record PaymentRequest(
         @Digits(integer = 36, fraction = 2)
         BigDecimal amount,
         @NotNull
-        PaymentStatus paymentStatus,
-        @NotNull
         TransactionType transactionType,
         // TODO: take user from authentication
         @NotNull
         Long userId,
         @NotNull
-        Long groupId
+        Long groupId,
+        @NotNull
+        List<Long> shareUsersId
 
 ) {
 }

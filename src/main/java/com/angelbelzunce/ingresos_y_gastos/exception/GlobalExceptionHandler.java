@@ -1,12 +1,38 @@
 package com.angelbelzunce.ingresos_y_gastos.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.*;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        problemDetail.setTitle("Invalid request");
+
+        problemDetail.setProperty("errors", errors);
+
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
 
     @ExceptionHandler(PaymentNotFoundException.class)
     public ProblemDetail paymentNotFound(PaymentNotFoundException ex) {
@@ -82,7 +108,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserIsNotAdminException.class)
     public ProblemDetail userIsNotAdmin(UserIsNotAdminException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
-        problemDetail.setTitle("User needs ADMIN role to invite");
+        problemDetail.setTitle("This action requires the ADMIN role");
         return problemDetail;
     }
 
@@ -93,5 +119,59 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(CreatorInShareUsersException.class)
+    public ProblemDetail creatorInShareUsers(CreatorInShareUsersException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("The creator cannot be included in share users");
+        return problemDetail;
+    }
 
+    @ExceptionHandler(DuplicatedShareUserException.class)
+    public ProblemDetail duplicateUserInPaymentShare(DuplicatedShareUserException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Duplicate user in payment share");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(PaymentShareNotFoundException.class)
+    public ProblemDetail paymentShareNotFound(PaymentShareNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problemDetail.setTitle("Payment share not found");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(IsNotShareCreatorException.class)
+    public ProblemDetail notShareCreator(IsNotShareCreatorException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Not creator user");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(IsNotShareOwnerException.class)
+    public ProblemDetail notShareOwner(IsNotShareOwnerException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Not owner user");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(NotPendingShareException.class)
+    public ProblemDetail notPendingShare(NotPendingShareException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Share status is not pending");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(PaymentWithNotPendingSharesException.class)
+    public ProblemDetail paymentWithNotPendingShares(PaymentWithNotPendingSharesException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Payment with not pending shares");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(UserCannotUndoTheirShare.class)
+    public ProblemDetail cannotUndoTheirShare(UserCannotUndoTheirShare ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("The creator cannot undo their own confirmed share");
+        return problemDetail;
+    }
 }

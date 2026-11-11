@@ -32,3 +32,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Página de pruebas local ###
+src/main/resources/static/tester.html
