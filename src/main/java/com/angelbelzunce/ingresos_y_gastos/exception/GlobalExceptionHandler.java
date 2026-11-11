@@ -160,4 +160,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         problemDetail.setTitle("Share status is not pending");
         return problemDetail;
     }
+
+    @ExceptionHandler(PaymentWithNotPendingSharesException.class)
+    public ProblemDetail paymentWithNotPendingShares(PaymentWithNotPendingSharesException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Payment with not pending shares");
+        return problemDetail;
+    }
+
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
 
+        // If share has not PENDING status, cannot settle it
         if (!paymentShare.getStatus().equals(ShareStatus.PENDING)) {
             throw new NotPendingShareException(paymentShare.getId());
         }
@@ -58,21 +60,60 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
+
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
         boolean isCreator = payment.getUser().getId().equals(userId);
         boolean isShareOfUser = paymentShare.getUser().getId().equals(userId);
 
+        // If payment is an income but authenticated user is not the payment creator
         if (isIncome && !isCreator) {
             throw new IsNotShareCreatorException(userId);
         }
 
+        // If payment is an expense but authenticated user is not the share owner
         if (!isIncome && !isShareOfUser) {
             throw new IsNotShareOwnerException(userId);
         }
+
 
         paymentShare.setStatus(ShareStatus.SETTLED);
         paymentShare.setPaidAt(LocalDateTime.now());
 
         return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+    }
+
+    @Override
+    public PaymentShareResponse confirm(Long paymentId, Long shareUserId, Long userId) {
+
+        PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
+                .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
+
+        // If share has not PENDING status, cannot confirm it
+        if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
+            throw new NotPendingShareException(paymentShare.getId());
+        }
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+
+        boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
+        boolean isPaymentCreator = payment.getUser().getId().equals(userId);
+        boolean isShareOfUser = paymentShare.getUser().getId().equals(userId);
+
+        // If payment is an income but authenticated user is not the payment creator
+        if (!isIncome && !isPaymentCreator) {
+            throw new IsNotShareCreatorException(userId);
+        }
+
+        // If payment is an expense but authenticated user is not the share owner
+        if (isIncome && !isShareOfUser) {
+            throw new IsNotShareOwnerException(userId);
+        }
+
+        paymentShare.setStatus(ShareStatus.CONFIRMED);
+
+        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+
     }
 }
