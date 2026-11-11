@@ -17,21 +17,35 @@ public class PaymentShareController {
     private final PaymentShareService paymentShareService;
 
     @GetMapping
-    public ResponseEntity<List<PaymentShareResponse>> findByPaymentId(@PathVariable Long paymentId){
+    public ResponseEntity<List<PaymentShareResponse>> findByPaymentId(@PathVariable Long paymentId) {
+
         return ResponseEntity.ok(paymentShareService.findByPaymentId(paymentId));
+
     }
+
     @GetMapping("/{userId}")
-    public ResponseEntity<PaymentShareResponse> findByPaymentIdAndUserId(@PathVariable Long paymentId, @PathVariable Long userId){
+    public ResponseEntity<PaymentShareResponse> findByPaymentIdAndUserId(@PathVariable Long paymentId,
+                                                                         @PathVariable Long userId) {
+
         return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
     }
 
     @PutMapping("/{shareUserId}/settle")
-    public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId, @PathVariable Long shareUserId, @RequestParam Long userId){
-        return ResponseEntity.status(HttpStatus.OK).body(paymentShareService.settle(paymentId, shareUserId, userId));
+    public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId,
+                                                       @PathVariable Long shareUserId,
+                                                       @RequestParam Long userId) {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(paymentShareService.settle(paymentId, shareUserId, userId));
     }
 
-    @PutMapping("/{shareUserId}/confirm")
-    public ResponseEntity<PaymentShareResponse> confirm(@PathVariable Long paymentId, @PathVariable Long shareUserId, @RequestParam Long userId){
-        return ResponseEntity.status(HttpStatus.OK).body(paymentShareService.confirm(paymentId, shareUserId, userId));
+    @PutMapping("/{shareUserId}/{isConfirming}")
+    public ResponseEntity<PaymentShareResponse> confirm(@PathVariable Long paymentId,
+                                                        @PathVariable Long shareUserId,
+                                                        @RequestParam Long userId,
+                                                        @PathVariable boolean isConfirming) {
+
+        return ResponseEntity.status(HttpStatus.OK).
+                body(paymentShareService.confirmOrRejectSettle(paymentId, shareUserId, userId, isConfirming));
     }
 }

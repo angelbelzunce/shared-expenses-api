@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -83,7 +82,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public PaymentShareResponse confirm(Long paymentId, Long shareUserId, Long userId) {
+    public PaymentShareResponse confirmOrRejectSettle(Long paymentId, Long shareUserId, Long userId, boolean isConfirming) {
 
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
@@ -111,7 +110,12 @@ public class PaymentShareServiceImpl implements PaymentShareService {
             throw new IsNotShareOwnerException(userId);
         }
 
-        paymentShare.setStatus(ShareStatus.CONFIRMED);
+        if (isConfirming){
+            paymentShare.setStatus(ShareStatus.CONFIRMED);
+        } else {
+            paymentShare.setStatus(ShareStatus.PENDING);
+        }
+
 
         return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
 
