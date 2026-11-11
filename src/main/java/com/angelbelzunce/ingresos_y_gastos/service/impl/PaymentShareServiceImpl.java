@@ -3,6 +3,7 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import com.angelbelzunce.ingresos_y_gastos.exception.*;
@@ -13,6 +14,7 @@ import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -99,6 +101,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
+    @Transactional
     public PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId) {
 
         Payment payment = paymentRepository.findById(paymentId)
@@ -113,11 +116,14 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         paymentShare.setStatus(ShareStatus.CONFIRMED);
 
+        updatePaymentStatus(payment);
+
         return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
 
     }
 
     @Override
+    @Transactional
     public PaymentShareResponse undoConfirmedShare(Long paymentId, Long shareUserId, Long userId) {
 
         Payment payment = paymentRepository.findById(paymentId)
@@ -125,7 +131,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
 
-        if (payment.getUser().getId().equals(shareUserId)){
+        if (payment.getUser().getId().equals(shareUserId)) {
             throw new UserCannotUndoTheirShare(userId);
         }
 
@@ -135,6 +141,8 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         }
 
         paymentShare.setStatus(ShareStatus.PENDING);
+
+        updatePaymentStatus(payment);
 
         return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
 
@@ -162,4 +170,22 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         return paymentShare;
     }
 
+    private void updatePaymentStatus(Payment payment) {
+
+        List<PaymentShare> shares = paymentShareRepository.findByPaymentId(payment.getId());
+
+        boolean isSharesConfirmed = true;
+
+        for (PaymentShare share : shares) {
+            if (!share.getStatus().equals(ShareStatus.CONFIRMED)) {
+                isSharesConfirmed = false;
+                break;
+            }
+        }
+
+        payment.setPaymentStatus(isSharesConfirmed ? PaymentStatus.PAID : PaymentStatus.PENDING);
+
+        paymentRepository.save(payment);
+
+    }
 }
