@@ -1,6 +1,7 @@
 package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
+import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
@@ -8,6 +9,7 @@ import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentShareMapper;
+import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
@@ -26,6 +28,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     private final PaymentShareRepository paymentShareRepository;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final PaymentShareMapper paymentShareMapper;
 
     @Override
@@ -50,8 +53,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     @Override
     public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        Payment payment = getPaymentForMember(paymentId, userId);
 
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
@@ -84,8 +86,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     @Override
     public PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long userId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        Payment payment = getPaymentForMember(paymentId, userId);
 
         PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
 
@@ -104,8 +105,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     @Transactional
     public PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        Payment payment = getPaymentForMember(paymentId, userId);
 
         PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
 
@@ -126,8 +126,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     @Transactional
     public PaymentShareResponse undoConfirmedShare(Long paymentId, Long shareUserId, Long userId) {
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        Payment payment = getPaymentForMember(paymentId, userId);
 
         PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
 
@@ -146,6 +145,16 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
 
+    }
+
+    private Payment getPaymentForMember(Long paymentId, Long userId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        if (!groupMemberRepository.existsByGroupIdAndUserId(payment.getGroup().getId(), userId)){
+            throw new UserNotInGroupException(userId, payment.getGroup().getId());
+        }
+        return payment;
     }
 
 
