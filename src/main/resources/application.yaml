@@ -2,18 +2,24 @@ spring:
   application:
     name: ingresos_y_gastos
   datasource:
-    url: jdbc:postgresql://localhost:5432/ingresos_y_gastos_db
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ingresos_y_gastos_db}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      # Flyway crea y cambia las tablas; Hibernate solo comprueba que coinciden con las entidades.
+      ddl-auto: validate
+    show-sql: ${SHOW_SQL:true}
+  flyway:
+    # La base local ya tenía las tablas: se marca como versión 1 sin ejecutar V1__init.sql.
+    baseline-on-migrate: true
   config:
     import:
       optional:file:.env[.properties]
 
+server:
+  port: ${PORT:8080}
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000
-

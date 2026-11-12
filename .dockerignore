@@ -1,0 +1,7 @@
+target/
+.idea/
+.vscode/
+.env
+*.iml
+src/main/resources/static/tester.html
+src/main/resources/static/phone.html
