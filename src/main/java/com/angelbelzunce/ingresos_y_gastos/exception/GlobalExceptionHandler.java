@@ -1,6 +1,7 @@
 package com.angelbelzunce.ingresos_y_gastos.exception;
 
 import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -172,6 +173,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     public ProblemDetail cannotUndoTheirShare(UserCannotUndoTheirShare ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
         problemDetail.setTitle("The creator cannot undo their own confirmed share");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ProblemDetail invalidUserOrPassword(BadCredentialsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problemDetail.setTitle("Invalid user or password");
         return problemDetail;
     }
 }
