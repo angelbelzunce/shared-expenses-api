@@ -48,19 +48,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentResponse> findByGroup(Long groupId, PaymentStatus paymentStatus) {
+    public List<PaymentResponse> findPaymentsByGroup(Long groupId, Long userId, PaymentStatus status) {
         groupRepository.findById(groupId)
                 .orElseThrow(() -> new GroupNotFoundException(groupId));
 
-        List<Payment> payments;
+        List<Payment> payments = paymentRepository.findPaymentsByGroupAndUser(groupId, userId, status);
 
-        if (paymentStatus == null) {
-            payments = paymentRepository.findByGroupId(groupId);
-
-        } else {
-            payments = paymentRepository.findByGroupIdAndPaymentStatus(groupId, paymentStatus);
-
-        }
 
         return payments.stream()
                 .map(paymentMapper::toResponse)

@@ -10,7 +10,7 @@ public interface PaymentService {
 
     List<PaymentResponse> findAll();
     PaymentResponse findById(Long id);
-    List<PaymentResponse> findByGroup(Long groupId, PaymentStatus paymentStatus);
+    List<PaymentResponse> findPaymentsByGroup(Long groupId, Long userId, PaymentStatus paymentStatus);
     PaymentResponse create(PaymentRequest request);
     PaymentResponse update(Long id, Long userId, PaymentRequest request);
     void delete(Long id, Long userId);

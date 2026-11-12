@@ -35,3 +35,4 @@ build/
 
 ### Página de pruebas local ###
 src/main/resources/static/tester.html
+src/main/resources/static/phone.html
