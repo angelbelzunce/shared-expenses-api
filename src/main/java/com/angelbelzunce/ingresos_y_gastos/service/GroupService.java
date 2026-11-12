@@ -8,7 +8,6 @@ import java.util.List;
 
 public interface GroupService {
 
-    List<GroupResponse> findAll();
     GroupResponse findById(Long id);
     List<GroupMemberResponse> findMembers(Long groupId);
     List<GroupResponse> findGroups(Long userId);

@@ -35,14 +35,6 @@ public class GroupServiceImpl implements GroupService {
     private final GroupMemberMapper groupMemberMapper;
 
     @Override
-    public List<GroupResponse> findAll() {
-        return groupRepository.findAll()
-                .stream()
-                .map(groupMapper::toResponse)
-                .toList();
-    }
-
-    @Override
     public GroupResponse findById(Long id) {
         return groupMapper.toResponse(groupRepository.findById(id)
                 .orElseThrow(() -> new GroupNotFoundException(id)));

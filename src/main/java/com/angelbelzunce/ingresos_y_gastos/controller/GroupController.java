@@ -24,12 +24,6 @@ public class GroupController {
     private final GroupService groupService;
     private final PaymentService paymentService;
 
-    @GetMapping
-    public ResponseEntity<List<GroupResponse>> findAll() {
-
-        return ResponseEntity.ok(groupService.findAll());
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<GroupResponse> findById(@PathVariable Long id) {
 

@@ -33,14 +33,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentShareRepository shareRepository;
     private final PaymentMapper paymentMapper;
 
-
-    @Override
-    public List<PaymentResponse> findAll() {
-        return paymentRepository.findAll().stream()
-                .map(paymentMapper::toResponse)
-                .toList();
-    }
-
     @Override
     public PaymentResponse findById(Long id) {
         return paymentMapper.toResponse(paymentRepository.findById(id)

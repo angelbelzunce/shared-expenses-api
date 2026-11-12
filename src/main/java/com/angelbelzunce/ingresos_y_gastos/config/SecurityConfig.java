@@ -32,6 +32,7 @@ public class SecurityConfig {
         // All requests needs authentication, except selected endpoints
         httpSecurity.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/tester.html", "/phone.html").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .anyRequest()
                 .authenticated());
