@@ -19,11 +19,6 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @GetMapping
-    public ResponseEntity<List<PaymentResponse>> findAll() {
-        return ResponseEntity.ok(paymentService.findAll());
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<PaymentResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(paymentService.findById(id));
