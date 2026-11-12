@@ -9,6 +9,7 @@ import com.angelbelzunce.ingresos_y_gastos.mapper.UserMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
 import com.angelbelzunce.ingresos_y_gastos.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,6 +18,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse findById(Long id) {
@@ -30,7 +32,9 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException(request.email());
         }
 
-        User savedUser = userRepository.save(userMapper.toEntity(request));
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
 

@@ -33,22 +33,22 @@ public class InvitationServiceImpl implements InvitationService {
 
 
     @Override
-    public InvitationResponse create(InvitationRequest request) {
+    public InvitationResponse create(InvitationRequest request, Long invitedByUserId) {
 
         // Guardamos el grupo al que pertenece la invitacion
         Group group = groupRepository.findById(request.groupId())
                 .orElseThrow(() -> new GroupNotFoundException(request.groupId()));
 
         // Guardamos al usuario que invita
-        User invitedBy = userRepository.findById(request.invitedById())
-                .orElseThrow(() -> new UserNotFoundException(request.invitedById()));
+        User invitedBy = userRepository.findById(invitedByUserId)
+                .orElseThrow(() -> new UserNotFoundException(invitedByUserId));
 
         // Guardamos al usuario invitado
         User invitedUser = userRepository.findById(request.invitedUserId())
                 .orElseThrow(() -> new UserNotFoundException(request.invitedUserId()));
 
         // Guardamos al miembro del grupo que invita
-        GroupMember invitedByMember = groupMemberRepository.findByGroupIdAndUserId(request.groupId(), request.invitedById())
+        GroupMember invitedByMember = groupMemberRepository.findByGroupIdAndUserId(request.groupId(), invitedByUserId)
                 .orElseThrow(() -> new UserNotInGroupException(invitedBy.getId(), group.getId()));
         // Comprobamos si el usuario que invita es ADMIN
         if (!invitedByMember.getUserRole().equals(UserRole.ADMIN)){

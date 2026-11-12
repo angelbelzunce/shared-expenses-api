@@ -5,6 +5,7 @@ import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,17 +24,17 @@ public class PaymentShareController {
 
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{ownerId}")
     public ResponseEntity<PaymentShareResponse> findByPaymentIdAndUserId(@PathVariable Long paymentId,
-                                                                         @PathVariable Long userId) {
+                                                                         @PathVariable Long ownerId) {
 
-        return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, userId));
+        return ResponseEntity.ok(paymentShareService.findByPaymentIdAndUserId(paymentId, ownerId));
     }
 
     @PatchMapping("/{shareUserId}/settle")
     public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId,
                                                        @PathVariable Long shareUserId,
-                                                       @RequestParam Long userId) {
+                                                       @AuthenticationPrincipal Long userId) {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(paymentShareService.settle(paymentId, shareUserId, userId));
@@ -42,7 +43,7 @@ public class PaymentShareController {
     @PatchMapping("/{shareUserId}/confirm")
     public ResponseEntity<PaymentShareResponse> confirm(@PathVariable Long paymentId,
                                                         @PathVariable Long shareUserId,
-                                                        @RequestParam Long userId
+                                                        @AuthenticationPrincipal Long userId
                                                         ) {
 
         return ResponseEntity.status(HttpStatus.OK).
@@ -52,7 +53,7 @@ public class PaymentShareController {
     @PatchMapping("/{shareUserId}/reject")
     public ResponseEntity<PaymentShareResponse> reject(@PathVariable Long paymentId,
                                                         @PathVariable Long shareUserId,
-                                                        @RequestParam Long userId
+                                                        @AuthenticationPrincipal Long userId
     ) {
 
         return ResponseEntity.status(HttpStatus.OK).
@@ -62,7 +63,7 @@ public class PaymentShareController {
     @PatchMapping("/{shareUserId}/undo")
     public ResponseEntity<PaymentShareResponse> undo(@PathVariable Long paymentId,
                                                        @PathVariable Long shareUserId,
-                                                       @RequestParam Long userId
+                                                       @AuthenticationPrincipal Long userId
     ) {
 
         return ResponseEntity.status(HttpStatus.OK).

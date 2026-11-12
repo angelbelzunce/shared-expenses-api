@@ -7,4 +7,5 @@ public interface UserService {
 
     UserResponse findById(Long id);
     UserResponse create(UserRequest request);
+
 }

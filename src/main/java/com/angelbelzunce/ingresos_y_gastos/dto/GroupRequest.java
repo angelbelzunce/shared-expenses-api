@@ -7,10 +7,7 @@ import jakarta.validation.constraints.Size;
 public record GroupRequest(
         @NotBlank
         @Size(max = 50)
-        String name,
-        // TODO: extract user from authentication
-        @NotNull
-        Long userId
+        String name
 ) {
 
 

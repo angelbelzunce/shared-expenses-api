@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,25 +20,22 @@ public class InvitationController {
     private final InvitationService invitationService;
 
     @PostMapping
-    public ResponseEntity<InvitationResponse> create(@Valid @RequestBody InvitationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(invitationService.create(request));
+    public ResponseEntity<InvitationResponse> create(@Valid @RequestBody InvitationRequest request, @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(invitationService.create(request, userId));
     }
 
-    // TODO: take userId from authentication
     @GetMapping
-    public ResponseEntity<List<InvitationResponse>> findPendingInvitations(@RequestParam Long userId) {
+    public ResponseEntity<List<InvitationResponse>> findPendingInvitations(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(invitationService.findMyPendingInvitations(userId));
     }
 
-    // TODO: take userId from authentication
     @PostMapping("/{invitationId}/accept")
-    public ResponseEntity<InvitationResponse> accept(@PathVariable Long invitationId, @RequestParam Long userId) {
+    public ResponseEntity<InvitationResponse> accept(@PathVariable Long invitationId, @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(invitationService.accept(invitationId, userId));
     }
 
-    // TODO: take userId from authentication
     @PostMapping("/{invitationId}/reject")
-    public ResponseEntity<InvitationResponse> reject(@PathVariable Long invitationId, @RequestParam Long userId) {
+    public ResponseEntity<InvitationResponse> reject(@PathVariable Long invitationId, @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(invitationService.reject(invitationId, userId));
     }
 }

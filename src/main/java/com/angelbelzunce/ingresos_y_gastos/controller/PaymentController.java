@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,17 +30,17 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody PaymentRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request));
+    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal Long userId){
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request, userId));
     }
 
-    @PutMapping("/{id}")// TODO: use authentication user
-    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @RequestParam Long userId, @Valid @RequestBody PaymentRequest request){
-        return ResponseEntity.ok(paymentService.update(id, userId, request));
+    @PutMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponse> update(@PathVariable Long paymentId, @AuthenticationPrincipal Long userId, @Valid @RequestBody PaymentRequest request){
+        return ResponseEntity.ok(paymentService.update(paymentId, userId, request));
     }
 
-    @DeleteMapping("/{id}")// TODO: use authentication user
-    public ResponseEntity<Void> delete(@PathVariable Long id, @RequestParam Long userId){
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal Long userId){
         paymentService.delete(id, userId);
         return ResponseEntity.noContent().build();
     }

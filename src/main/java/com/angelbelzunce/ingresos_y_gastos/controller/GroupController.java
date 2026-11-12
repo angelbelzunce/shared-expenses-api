@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,28 +42,28 @@ public class GroupController {
         return ResponseEntity.ok(groupService.findMembers(id));
     }
 
-    @GetMapping("/{id}/payments/{userId}")
+    @GetMapping("/{id}/payments")
     public ResponseEntity<List<PaymentResponse>> findPayments(@PathVariable Long id,
-                                                              @PathVariable Long userId,
+                                                              @AuthenticationPrincipal Long userId,
                                                               @RequestParam(required = false) PaymentStatus status) {
 
         return ResponseEntity.ok(paymentService.findPaymentsByGroup(id, userId, status));
     }
 
     @PostMapping
-    public ResponseEntity<GroupResponse> create(@Valid @RequestBody GroupRequest request) {
+    public ResponseEntity<GroupResponse> create(@Valid @RequestBody GroupRequest request, @AuthenticationPrincipal Long userId) {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.create(request, userId));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<GroupResponse> update(@PathVariable Long id, @Valid @RequestBody GroupRequest request) {
+    @PutMapping("/{groupId}")
+    public ResponseEntity<GroupResponse> update(@PathVariable Long groupId, @Valid @RequestBody GroupRequest request, @AuthenticationPrincipal Long userId) {
 
-        return ResponseEntity.ok(groupService.update(id, request));
+        return ResponseEntity.ok(groupService.update(groupId, request, userId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id, @RequestParam Long userId) {
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal Long userId) {
 
         groupService.delete(id, userId);
 
