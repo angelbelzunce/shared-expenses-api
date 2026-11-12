@@ -10,6 +10,8 @@ spring:
       # Flyway crea y cambia las tablas; Hibernate solo comprueba que coinciden con las entidades.
       ddl-auto: validate
     show-sql: ${SHOW_SQL:true}
+    # La conexión a la base de datos se cierra al acabar el servicio, no al terminar de escribir la respuesta.
+    open-in-view: false
   flyway:
     # La base local ya tenía las tablas: se marca como versión 1 sin ejecutar V1__init.sql.
     baseline-on-migrate: true
