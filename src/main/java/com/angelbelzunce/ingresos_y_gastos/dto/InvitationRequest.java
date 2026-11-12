@@ -6,8 +6,6 @@ public record InvitationRequest(
         @NotNull
         Long groupId,
         @NotNull
-        Long invitedUserId,
-        @NotNull
-        Long invitedById
+        Long invitedUserId
 ) {
 }

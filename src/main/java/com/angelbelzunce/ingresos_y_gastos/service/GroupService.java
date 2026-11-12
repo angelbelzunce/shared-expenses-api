@@ -12,7 +12,7 @@ public interface GroupService {
     GroupResponse findById(Long id);
     List<GroupMemberResponse> findMembers(Long groupId);
     List<GroupResponse> findGroups(Long userId);
-    GroupResponse create(GroupRequest request);
-    GroupResponse update(Long id, GroupRequest request);
+    GroupResponse create(GroupRequest request, Long userId);
+    GroupResponse update(Long id, GroupRequest request, Long userId);
     void delete(Long id, Long userId);
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface InvitationService {
 
-    InvitationResponse create(InvitationRequest request);
+    InvitationResponse create(InvitationRequest request, Long invitedByUserId);
     List<InvitationResponse> findMyPendingInvitations(Long userId);
     InvitationResponse accept(Long invitationId, Long userId);
     InvitationResponse reject(Long invitationId, Long userId);

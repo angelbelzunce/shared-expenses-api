@@ -12,7 +12,6 @@ public record UserRequest (
         @NotBlank
         @Size(max = 255)
         String email,
-        // TODO: Add BCRYPT security to password
         @NotBlank
         @Size(min = 8, max = 72)
         String password

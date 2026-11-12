@@ -19,9 +19,6 @@ public record PaymentRequest(
         BigDecimal amount,
         @NotNull
         TransactionType transactionType,
-        // TODO: take user from authentication
-        @NotNull
-        Long userId,
         @NotNull
         Long groupId,
         @NotNull

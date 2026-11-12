@@ -63,9 +63,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PaymentResponse create(PaymentRequest request) {
+    public PaymentResponse create(PaymentRequest request, Long userId) {
 
-        if (request.shareUsersId().contains(request.userId())) {
+        if (request.shareUsersId().contains(userId)) {
             throw new CreatorInShareUsersException();
         }
 
@@ -77,11 +77,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = paymentMapper.toEntity(request);
 
-        User user = userRepository.findById(request.userId()).orElseThrow(() -> new UserNotFoundException(request.userId()));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
         Group group = groupRepository.findById(request.groupId()).orElseThrow(() -> new GroupNotFoundException(request.groupId()));
 
-        if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), request.userId())) {
+        if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), userId)) {
             throw new UserNotInGroupException(user.getId(), group.getId());
         }
 
@@ -104,10 +104,10 @@ public class PaymentServiceImpl implements PaymentService {
         BigDecimal shareAmount = request.amount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
 
         PaymentShare paymentShare;
-        for (Long userId : request.shareUsersId()) {
+        for (Long shareUserId : request.shareUsersId()) {
             paymentShare = new PaymentShare();
             paymentShare.setPayment(saved);
-            paymentShare.setUser(userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId)));
+            paymentShare.setUser(userRepository.findById(shareUserId).orElseThrow(() -> new UserNotFoundException(shareUserId)));
             paymentShare.setAmount(shareAmount);
             paymentShare.setStatus(ShareStatus.PENDING);
             shareRepository.save(paymentShare);
@@ -128,13 +128,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PaymentResponse update(Long id, Long userId, PaymentRequest request) {
+    public PaymentResponse update(Long paymentId, Long userId, PaymentRequest request) {
 
         // Look for payment to update
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new PaymentNotFoundException(id));
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
-        if (request.shareUsersId().contains(request.userId())) {
+        if (request.shareUsersId().contains(payment.getUser().getId())) {
             throw new CreatorInShareUsersException();
         }
 

@@ -74,9 +74,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public GroupResponse create(GroupRequest request) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new UserNotFoundException(request.userId()));
+    public GroupResponse create(GroupRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         Group group = groupMapper.toEntity(request);
         Group savedGroup = groupRepository.save(group);
@@ -92,9 +92,20 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public GroupResponse update(Long id, GroupRequest request) {
+    public GroupResponse update(Long id, GroupRequest request, Long userId) {
+
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new GroupNotFoundException(id));
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        GroupMember groupMember = groupMemberRepository.findByGroupIdAndUserId(id, userId)
+                .orElseThrow(() -> new UserNotInGroupException(userId, id));
+
+        if (!groupMember.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsNotAdminException();
+        }
 
         group.setName(request.name());
         Group saved = groupRepository.save(group);
