@@ -63,6 +63,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return problemDetail;
     }
 
+    @ExceptionHandler(UserNotInPaymentException.class)
+    public ProblemDetail userNotInPayment(UserNotInPaymentException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("User not in payment");
+        return problemDetail;
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ProblemDetail emailAlreadyExists(EmailAlreadyExistsException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
@@ -181,5 +188,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
         problemDetail.setTitle("Invalid user or password");
         return problemDetail;
+    }
+
+    @ExceptionHandler(AdminCannotLeaveGroupException.class)
+    public ProblemDetail adminCannotLeaveGroup(AdminCannotLeaveGroupException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Admin cannot leave the group");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(CreatorCannotLeavePaymentException.class)
+    public ProblemDetail creatorCannotLeaveTheirOwnPayment(CreatorCannotLeavePaymentException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Creator cannot leave their own payment");
+        return problemDetail;
+
     }
 }
