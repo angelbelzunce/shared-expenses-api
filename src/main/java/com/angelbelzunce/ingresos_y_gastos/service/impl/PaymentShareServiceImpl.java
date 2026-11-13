@@ -51,9 +51,9 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId) {
+    public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long currentUserId) {
 
-        Payment payment = getPaymentForMember(paymentId, userId);
+        Payment payment = getPaymentForMember(paymentId, currentUserId);
 
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(paymentId, shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(paymentId, shareUserId));
@@ -64,17 +64,17 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         }
 
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
-        boolean isCreator = payment.getUser().getId().equals(userId);
-        boolean isShareOfUser = paymentShare.getUser().getId().equals(userId);
+        boolean isCreator = payment.getUser().getId().equals(currentUserId);
+        boolean isShareOfUser = paymentShare.getUser().getId().equals(currentUserId);
 
         // If payment is an income but authenticated user is not the payment creator
         if (isIncome && !isCreator) {
-            throw new IsNotShareCreatorException(userId);
+            throw new IsNotShareCreatorException(currentUserId);
         }
 
         // If payment is an expense but authenticated user is not the share owner
         if (!isIncome && !isShareOfUser) {
-            throw new IsNotShareOwnerException(userId);
+            throw new IsNotShareOwnerException(currentUserId);
         }
 
         paymentShare.setStatus(ShareStatus.SETTLED);
@@ -84,11 +84,11 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
-    public PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long userId) {
+    public PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long currentUserId) {
 
-        Payment payment = getPaymentForMember(paymentId, userId);
+        Payment payment = getPaymentForMember(paymentId, currentUserId);
 
-        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, currentUserId);
 
         // If share has not SETTLED status, cannot reject it
         if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
@@ -103,11 +103,11 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
     @Override
     @Transactional
-    public PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId) {
+    public PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long currentUserId) {
 
-        Payment payment = getPaymentForMember(paymentId, userId);
+        Payment payment = getPaymentForMember(paymentId, currentUserId);
 
-        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, currentUserId);
 
         // If share has not SETTLED status, cannot confirm it
         if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
@@ -124,14 +124,14 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
     @Override
     @Transactional
-    public PaymentShareResponse undoConfirmedShare(Long paymentId, Long shareUserId, Long userId) {
+    public PaymentShareResponse undoConfirmedShare(Long paymentId, Long shareUserId, Long currentUserId) {
 
-        Payment payment = getPaymentForMember(paymentId, userId);
+        Payment payment = getPaymentForMember(paymentId, currentUserId);
 
-        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, userId);
+        PaymentShare paymentShare = getPaymentShare(payment, shareUserId, currentUserId);
 
         if (payment.getUser().getId().equals(shareUserId)) {
-            throw new UserCannotUndoTheirShare(userId);
+            throw new UserCannotUndoTheirShare(currentUserId);
         }
 
         // If share has not CONFIRMED status, cannot undo it
@@ -147,34 +147,34 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
     }
 
-    private Payment getPaymentForMember(Long paymentId, Long userId) {
+    private Payment getPaymentForMember(Long paymentId, Long currentUserId) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
-        if (!groupMemberRepository.existsByGroupIdAndUserId(payment.getGroup().getId(), userId)){
-            throw new UserNotInGroupException(userId, payment.getGroup().getId());
+        if (!groupMemberRepository.existsByGroupIdAndUserId(payment.getGroup().getId(), currentUserId)){
+            throw new UserNotInGroupException(currentUserId, payment.getGroup().getId());
         }
         return payment;
     }
 
 
-    private PaymentShare getPaymentShare(Payment payment, Long shareUserId, Long userId) {
+    private PaymentShare getPaymentShare(Payment payment, Long shareUserId, Long currentUserId) {
 
         PaymentShare paymentShare = paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUserId)
                 .orElseThrow(() -> new PaymentShareNotFoundException(payment.getId(), shareUserId));
 
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
-        boolean isPaymentCreator = payment.getUser().getId().equals(userId);
-        boolean isShareOfUser = paymentShare.getUser().getId().equals(userId);
+        boolean isPaymentCreator = payment.getUser().getId().equals(currentUserId);
+        boolean isShareOfUser = paymentShare.getUser().getId().equals(currentUserId);
 
         // If payment is an income but authenticated user is not the payment creator
         if (!isIncome && !isPaymentCreator) {
-            throw new IsNotShareCreatorException(userId);
+            throw new IsNotShareCreatorException(currentUserId);
         }
 
         // If payment is an expense but authenticated user is not the share owner
         if (isIncome && !isShareOfUser) {
-            throw new IsNotShareOwnerException(userId);
+            throw new IsNotShareOwnerException(currentUserId);
         }
         return paymentShare;
     }

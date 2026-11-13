@@ -10,12 +10,12 @@ public interface PaymentShareService {
 
     PaymentShareResponse findByPaymentIdAndUserId(Long paymentId, Long userId);
 
-    PaymentShareResponse settle(Long paymentId, Long shareUserId, Long userId);
+    PaymentShareResponse settle(Long paymentId, Long shareUserId, Long currentUserId);
 
-    PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long userId);
+    PaymentShareResponse confirmSettle(Long paymentId, Long shareUserId, Long currentUserId);
 
-    PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long userId);
+    PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long currentUserId);
 
-    PaymentShareResponse undoConfirmedShare(Long paymnetId, Long shareUserId, Long userId);
+    PaymentShareResponse undoConfirmedShare(Long paymnetId, Long shareUserId, Long currentUserId);
 
 }

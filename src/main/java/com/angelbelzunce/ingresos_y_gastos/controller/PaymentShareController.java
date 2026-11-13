@@ -34,39 +34,39 @@ public class PaymentShareController {
     @PatchMapping("/{shareUserId}/settle")
     public ResponseEntity<PaymentShareResponse> settle(@PathVariable Long paymentId,
                                                        @PathVariable Long shareUserId,
-                                                       @AuthenticationPrincipal Long userId) {
+                                                       @AuthenticationPrincipal Long currentUserId) {
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(paymentShareService.settle(paymentId, shareUserId, userId));
+                .body(paymentShareService.settle(paymentId, shareUserId, currentUserId));
     }
 
     @PatchMapping("/{shareUserId}/confirm")
     public ResponseEntity<PaymentShareResponse> confirm(@PathVariable Long paymentId,
                                                         @PathVariable Long shareUserId,
-                                                        @AuthenticationPrincipal Long userId
+                                                        @AuthenticationPrincipal Long currentUserId
                                                         ) {
 
         return ResponseEntity.status(HttpStatus.OK).
-                body(paymentShareService.confirmSettle(paymentId, shareUserId, userId));
+                body(paymentShareService.confirmSettle(paymentId, shareUserId, currentUserId));
     }
 
     @PatchMapping("/{shareUserId}/reject")
     public ResponseEntity<PaymentShareResponse> reject(@PathVariable Long paymentId,
                                                         @PathVariable Long shareUserId,
-                                                        @AuthenticationPrincipal Long userId
+                                                        @AuthenticationPrincipal Long currentUserId
     ) {
 
         return ResponseEntity.status(HttpStatus.OK).
-                body(paymentShareService.rejectSettle(paymentId, shareUserId, userId));
+                body(paymentShareService.rejectSettle(paymentId, shareUserId, currentUserId));
     }
 
     @PatchMapping("/{shareUserId}/undo")
     public ResponseEntity<PaymentShareResponse> undo(@PathVariable Long paymentId,
                                                        @PathVariable Long shareUserId,
-                                                       @AuthenticationPrincipal Long userId
+                                                       @AuthenticationPrincipal Long currentUserId
     ) {
 
         return ResponseEntity.status(HttpStatus.OK).
-                body(paymentShareService.undoConfirmedShare(paymentId, shareUserId, userId));
+                body(paymentShareService.undoConfirmedShare(paymentId, shareUserId, currentUserId));
     }
 }
