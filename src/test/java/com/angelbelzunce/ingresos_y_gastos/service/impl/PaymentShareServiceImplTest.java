@@ -13,6 +13,7 @@ import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentShareServiceImplTest {
+
     @Mock
     private PaymentShareRepository paymentShareRepository;
     @Mock
@@ -48,7 +50,7 @@ public class PaymentShareServiceImplTest {
     private PaymentShare paymentShare;
 
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
 
         creator = new User();
         creator.setId(200L);
@@ -71,181 +73,197 @@ public class PaymentShareServiceImplTest {
 
     }
 
-    @Test
-    public void settle_userNotInGroup_throwsUserNotInGroupException() {
+    @Nested
+    public class Settle {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+        @Test
+        public void settle_paymentNotExists_throwsPaymentNotFoundException() {
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(false);
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.empty());
 
-        assertThrows(UserNotInGroupException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
+            assertThrows(PaymentNotFoundException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
 
-        verify(paymentShareRepository, never()).save(any());
+            verify(paymentShareRepository, never()).save(any());
 
-    }
+        }
 
-    @Test
-    public void rejectSettle_userNotInGroup_throwsUserNotInGroupException() {
+        @Test
+        public void settle_userNotInGroup_throwsUserNotInGroupException() {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(false);
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(false);
 
-        assertThrows(UserNotInGroupException.class,
-                () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
+            assertThrows(UserNotInGroupException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
-        verify(paymentShareRepository, never()).save(any());
+            verify(paymentShareRepository, never()).save(any());
 
-    }
+        }
 
-    @Test
-    public void confirmSettle_userNotInGroup_throwsUserNotInGroupException() {
+        @Test
+        public void settle_paymentShareNotExists_throwsPaymentShareNotFoundException() {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(false);
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+                    .thenReturn(true);
 
-        assertThrows(UserNotInGroupException.class,
-                () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+                    .thenReturn(Optional.empty());
 
-        verify(paymentShareRepository, never()).save(any());
+            assertThrows(PaymentShareNotFoundException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
 
-    }
+            verify(paymentShareRepository, never()).save(any());
+        }
 
-    @Test
-    public void undoConfirmedShare_userNotInGroup_throwsUserNotInGroupException() {
+        @Test
+        public void settle_paymentShareIsNotPending_throwsNotPendingShareException() {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            paymentShare.setStatus(ShareStatus.SETTLED);
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(false);
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        assertThrows(UserNotInGroupException.class,
-                () -> paymentShareServiceImpl.undoConfirmedShare(payment.getId(), shareUser.getId(), shareUser.getId()));
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+                    .thenReturn(true);
 
-        verify(paymentShareRepository, never()).save(any());
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+                    .thenReturn(Optional.of(paymentShare));
 
-    }
+            assertThrows(NotPendingShareException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
 
-    @Test
-    public void settle_paymentNotExists_throwsPaymentNotFoundException() {
+            verify(paymentShareRepository, never()).save(any());
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.empty());
+        }
 
-        assertThrows(PaymentNotFoundException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+        @Test
+        public void settle_isNotCreatorOfThisIncome_throwsIsNotShareCreatorException() {
 
-        verify(paymentShareRepository, never()).save(any());
+            payment.setTransactionType(TransactionType.INCOME);
 
-    }
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-    @Test
-    public void settle_paymentShareNotExists_throwsPaymentShareNotFoundException(){
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(true);
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+                    .thenReturn(Optional.of(paymentShare));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
-                .thenReturn(true);
+            assertThrows(IsNotShareCreatorException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
-        when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
-                .thenReturn(Optional.empty());
+            verify(paymentShareRepository, never()).save(any());
 
-        assertThrows(PaymentShareNotFoundException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+        }
 
-        verify(paymentShareRepository, never()).save(any());
-    }
+        @Test
+        public void settle_isNotOwnerOfThisExpense_throwsIsNotShareOwnerException() {
 
-    @Test
-    public void settle_paymentShareIsNotPending_throwsNotPendingShareException(){
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        paymentShare.setStatus(ShareStatus.SETTLED);
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+                    .thenReturn(true);
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+                    .thenReturn(Optional.of(paymentShare));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
-                .thenReturn(true);
+            assertThrows(IsNotShareOwnerException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
 
-        when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
-                .thenReturn(Optional.of(paymentShare));
+            verify(paymentShareRepository, never()).save(any());
 
-        assertThrows(NotPendingShareException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+        }
 
-        verify(paymentShareRepository, never()).save(any());
+        @Test
+        public void settle_setShareStatusSettled() {
 
-    }
-    @Test
-    public void settle_isNotCreatorOfThisIncome_throwsIsNotShareCreatorException(){
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        payment.setTransactionType(TransactionType.INCOME);
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(true);
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+                    .thenReturn(Optional.of(paymentShare));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(true);
+            paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId());
 
-        when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
-                .thenReturn(Optional.of(paymentShare));
+            verify(paymentShareRepository, times(1)).save(paymentShare);
 
-        assertThrows(IsNotShareCreatorException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
+            assertEquals(ShareStatus.SETTLED, paymentShare.getStatus());
+            assertNotNull(paymentShare.getPaidAt());
 
-        verify(paymentShareRepository, never()).save(any());
+        }
 
     }
 
-    @Test
-    public void settle_isNotOwnerOfThisExpense_throwsIsNotShareOwnerException(){
+    @Nested
+    public class RejectSettle {
+        @Test
+        public void rejectSettle_userNotInGroup_throwsUserNotInGroupException() {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
-                .thenReturn(true);
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(false);
 
-        when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
-                .thenReturn(Optional.of(paymentShare));
+            assertThrows(UserNotInGroupException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
-        assertThrows(IsNotShareOwnerException.class,
-                () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+            verify(paymentShareRepository, never()).save(any());
 
-        verify(paymentShareRepository, never()).save(any());
-
+        }
     }
 
-    @Test
-    public void settle_setShareStatusSettled(){
+    @Nested
+    public class ConfirmSettle {
 
-        when(paymentRepository.findById(payment.getId()))
-                .thenReturn(Optional.of(payment));
+        @Test
+        public void confirmSettle_userNotInGroup_throwsUserNotInGroupException() {
 
-        when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
-                .thenReturn(true);
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
 
-        when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
-                .thenReturn(Optional.of(paymentShare));
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(false);
 
-        paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId());
+            assertThrows(UserNotInGroupException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
-        verify(paymentShareRepository, times(1)).save(paymentShare);
+            verify(paymentShareRepository, never()).save(any());
 
-        assertEquals(ShareStatus.SETTLED, paymentShare.getStatus());
-        assertNotNull(paymentShare.getPaidAt());
-
+        }
     }
 
+    @Nested
+    public class UndoConfirmedShare {
+
+        @Test
+        public void undoConfirmedShare_userNotInGroup_throwsUserNotInGroupException() {
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+                    .thenReturn(false);
+
+            assertThrows(UserNotInGroupException.class,
+                    () -> paymentShareServiceImpl.undoConfirmedShare(payment.getId(), shareUser.getId(), shareUser.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+    }
 
 }
