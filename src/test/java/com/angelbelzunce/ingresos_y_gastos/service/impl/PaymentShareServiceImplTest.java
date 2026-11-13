@@ -1,6 +1,5 @@
 package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
-import com.angelbelzunce.ingresos_y_gastos.entity.Group;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
@@ -8,7 +7,6 @@ import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentShareMapper;
-import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
@@ -36,14 +34,11 @@ public class PaymentShareServiceImplTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private GroupMemberRepository groupMemberRepository;
-    @Mock
     private PaymentShareMapper paymentShareMapper;
 
     @InjectMocks
     private PaymentShareServiceImpl paymentShareServiceImpl;
 
-    private Group group;
     private Payment payment;
     private User creator;
     private User shareUser;
@@ -58,13 +53,9 @@ public class PaymentShareServiceImplTest {
         shareUser = new User();
         shareUser.setId(300L);
 
-        group = new Group();
-        group.setId(1L);
-
         payment = new Payment();
         payment.setId(10L);
         payment.setUser(creator);
-        payment.setGroup(group);
         payment.setTransactionType(TransactionType.EXPENSE);
 
         paymentShare = new PaymentShare();
@@ -90,15 +81,15 @@ public class PaymentShareServiceImplTest {
         }
 
         @Test
-        public void settle_userNotInGroup_throwsUserNotInGroupException() {
+        public void settle_userNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(false);
 
-            assertThrows(UserNotInGroupException.class,
+            assertThrows(UserNotInPaymentException.class,
                     () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
             verify(paymentShareRepository, never()).save(any());
@@ -111,7 +102,7 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
                     .thenReturn(true);
 
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
@@ -131,7 +122,7 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
                     .thenReturn(true);
 
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
@@ -152,7 +143,7 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(true);
 
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
@@ -171,7 +162,7 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
                     .thenReturn(true);
 
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
@@ -190,7 +181,7 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(true);
 
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
@@ -210,15 +201,15 @@ public class PaymentShareServiceImplTest {
     @Nested
     public class RejectSettle {
         @Test
-        public void rejectSettle_userNotInGroup_throwsUserNotInGroupException() {
+        public void rejectSettle_userNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(false);
 
-            assertThrows(UserNotInGroupException.class,
+            assertThrows(UserNotInPaymentException.class,
                     () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
             verify(paymentShareRepository, never()).save(any());
@@ -230,15 +221,15 @@ public class PaymentShareServiceImplTest {
     public class ConfirmSettle {
 
         @Test
-        public void confirmSettle_userNotInGroup_throwsUserNotInGroupException() {
+        public void confirmSettle_userNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(false);
 
-            assertThrows(UserNotInGroupException.class,
+            assertThrows(UserNotInPaymentException.class,
                     () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
 
             verify(paymentShareRepository, never()).save(any());
@@ -250,15 +241,15 @@ public class PaymentShareServiceImplTest {
     public class UndoConfirmedShare {
 
         @Test
-        public void undoConfirmedShare_userNotInGroup_throwsUserNotInGroupException() {
+        public void undoConfirmedShare_userNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
                     .thenReturn(false);
 
-            assertThrows(UserNotInGroupException.class,
+            assertThrows(UserNotInPaymentException.class,
                     () -> paymentShareServiceImpl.undoConfirmedShare(payment.getId(), shareUser.getId(), shareUser.getId()));
 
             verify(paymentShareRepository, never()).save(any());
