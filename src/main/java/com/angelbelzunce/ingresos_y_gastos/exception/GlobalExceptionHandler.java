@@ -189,4 +189,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         problemDetail.setTitle("Admin cannot leave the group");
         return problemDetail;
     }
+
+    @ExceptionHandler(CreatorCannotLeavePaymentException.class)
+    public ProblemDetail creatorCannotLeaveTheirOwnPayment(CreatorCannotLeavePaymentException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Creator cannot leave their own payment");
+        return problemDetail;
+
+    }
 }

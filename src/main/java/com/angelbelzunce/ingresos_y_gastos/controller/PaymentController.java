@@ -29,6 +29,12 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(request, userId));
     }
 
+    @PostMapping("/{paymentId}/leave")
+    public ResponseEntity<Void> leave(@PathVariable Long paymentId, @AuthenticationPrincipal Long userId){
+        paymentService.leave(paymentId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{paymentId}")
     public ResponseEntity<PaymentResponse> update(@PathVariable Long paymentId, @AuthenticationPrincipal Long userId, @Valid @RequestBody PaymentRequest request){
         return ResponseEntity.ok(paymentService.update(paymentId, userId, request));
@@ -39,6 +45,4 @@ public class PaymentController {
         paymentService.delete(id, userId);
         return ResponseEntity.noContent().build();
     }
-
-
 }
