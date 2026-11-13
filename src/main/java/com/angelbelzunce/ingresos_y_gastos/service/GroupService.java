@@ -10,8 +10,9 @@ public interface GroupService {
 
     GroupResponse findById(Long id);
     List<GroupMemberResponse> findMembers(Long groupId);
-    List<GroupResponse> findGroups(Long userId);
+    List<GroupResponse> findGroupsByUserId(Long userId);
     GroupResponse create(GroupRequest request, Long userId);
     GroupResponse update(Long id, GroupRequest request, Long userId);
     void delete(Long id, Long userId);
+    void leave(Long groupId, Long currentUserId);
 }

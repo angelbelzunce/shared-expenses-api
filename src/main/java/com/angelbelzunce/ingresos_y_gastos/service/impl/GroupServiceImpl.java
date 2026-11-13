@@ -7,10 +7,7 @@ import com.angelbelzunce.ingresos_y_gastos.entity.Group;
 import com.angelbelzunce.ingresos_y_gastos.entity.GroupMember;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
 import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
-import com.angelbelzunce.ingresos_y_gastos.exception.GroupNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserIsNotAdminException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotFoundException;
-import com.angelbelzunce.ingresos_y_gastos.exception.UserNotInGroupException;
+import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.GroupMapper;
 import com.angelbelzunce.ingresos_y_gastos.mapper.GroupMemberMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.GroupMemberRepository;
@@ -21,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -53,7 +49,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<GroupResponse> findGroups(Long userId) {
+    public List<GroupResponse> findGroupsByUserId(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -121,5 +117,30 @@ public class GroupServiceImpl implements GroupService {
         }
 
         groupRepository.delete(group);
+    }
+
+    @Transactional
+    @Override
+    public void leave(Long groupId, Long currentUserId) {
+
+        if(!groupRepository.existsById(groupId)){
+            throw new GroupNotFoundException(groupId);
+        }
+
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
+                .orElseThrow(() -> new UserNotInGroupException(currentUserId, groupId));
+
+        List<GroupMember> memberList = groupMemberRepository.findByGroupId(groupId);
+
+        if (memberList.size() == 1){
+            delete(groupId, currentUserId);
+            return;
+        }
+
+        if (member.getUserRole().equals(UserRole.ADMIN)){
+            throw new AdminCannotLeaveGroupException();
+        }
+
+        groupMemberRepository.delete(member);
     }
 }
