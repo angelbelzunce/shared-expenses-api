@@ -52,7 +52,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .toList();
     }
 
-
     @Override
     @Transactional
     public PaymentResponse create(PaymentRequest request, Long userId) {
@@ -85,11 +84,13 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setUser(user);
         payment.setGroup(group);
+
         if (request.shareUsersId().isEmpty()) {
             payment.setPaymentStatus(PaymentStatus.PAID);
         } else {
             payment.setPaymentStatus(PaymentStatus.PENDING);
         }
+
         Payment saved = paymentRepository.save(payment);
 
         int shareUsers = request.shareUsersId().size() + 1;
@@ -214,6 +215,56 @@ public class PaymentServiceImpl implements PaymentService {
         });
 
         paymentRepository.delete(payment);
+
+    }
+
+    @Override
+    @Transactional
+    public void leave(Long paymentId, Long currentUserId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+        Optional<PaymentShare> optionalShare = shareRepository.findByPaymentIdAndUserId(paymentId, currentUserId);
+
+        if (optionalShare.isEmpty()) {
+            throw new PaymentShareNotFoundException(paymentId, currentUserId);
+        }
+
+        if (payment.getUser().getId().equals(currentUserId)) {
+            throw new CreatorCannotLeavePaymentException();
+        }
+
+        List<PaymentShare> shareList = shareRepository.findByPaymentId(paymentId);
+
+        for (PaymentShare share : shareList) {
+            if (!share.getUser().getId().equals(payment.getUser().getId())
+                    && !share.getStatus().equals(ShareStatus.PENDING)) {
+
+                throw new PaymentWithNotPendingSharesException(paymentId);
+            }
+        }
+
+        shareList.removeIf(share -> share.getUser().getId().equals(currentUserId));
+        shareRepository.delete(optionalShare.get());
+
+        // Calculate new share amount
+        int shareUsers = shareList.size();
+        BigDecimal shareAmount = payment.getAmount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+
+        BigDecimal amountShareCreator = payment.getAmount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
+
+        shareList.forEach(share ->
+        {
+            share.setAmount(shareAmount);
+            if (share.getUser().getId().equals(payment.getUser().getId())) share.setAmount(amountShareCreator);
+
+        });
+
+        if (shareList.size() == 1) {
+            payment.setPaymentStatus(PaymentStatus.PAID);
+        }
+
 
     }
 

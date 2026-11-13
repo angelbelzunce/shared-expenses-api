@@ -13,5 +13,6 @@ public interface PaymentService {
     PaymentResponse create(PaymentRequest request, Long userId);
     PaymentResponse update(Long id, Long userId, PaymentRequest request);
     void delete(Long id, Long userId);
+    void leave(Long paymentId, Long currentUserId);
 
 }
