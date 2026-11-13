@@ -182,4 +182,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         problemDetail.setTitle("Invalid user or password");
         return problemDetail;
     }
+
+    @ExceptionHandler(AdminCannotLeaveGroupException.class)
+    public ProblemDetail adminCannotLeaveGroup(AdminCannotLeaveGroupException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("Admin cannot leave the group");
+        return problemDetail;
+    }
 }

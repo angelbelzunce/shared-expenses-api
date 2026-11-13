@@ -33,6 +33,6 @@ public class UserController {
 
     @GetMapping("/{id}/groups")
     public ResponseEntity<List<GroupResponse>> findGroups(@PathVariable Long id){
-        return ResponseEntity.ok(groupService.findGroups(id));
+        return ResponseEntity.ok(groupService.findGroupsByUserId(id));
     }
 }

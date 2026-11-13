@@ -64,4 +64,12 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{groupId}/leave")
+    public ResponseEntity<Void> leave(@PathVariable Long groupId, @AuthenticationPrincipal Long userId){
+
+        groupService.leave(groupId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
