@@ -1,6 +1,7 @@
 package com.angelbelzunce.ingresos_y_gastos.mapper;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.UserShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import org.springframework.stereotype.Component;
 
@@ -16,4 +17,19 @@ public class PaymentShareMapper {
                 paymentShare.getStatus(),
                 paymentShare.getPaidAt());
     }
+
+    public UserShareResponse toUserSharesResponse(PaymentShare paymentShare) {
+        return new UserShareResponse(
+                paymentShare.getId(),
+                paymentShare.getPayment().getId(),
+                paymentShare.getPayment().getTitle(),
+                paymentShare.getPayment().getGroup().getId(),
+                paymentShare.getPayment().getGroup().getName(),
+                paymentShare.getAmount(),
+                paymentShare.getStatus(),
+                paymentShare.getPaidAt()
+        );
+    }
+
+
 }
