@@ -211,4 +211,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         problemDetail.setTitle("User is already ADMIN");
         return problemDetail;
     }
+
+    @ExceptionHandler(MemberIsNotAdminException.class)
+    public ProblemDetail memberIsNotAdmin(MemberIsNotAdminException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("User is not ADMIN");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(IsCreatorOrAdminException.class)
+    public ProblemDetail userIsCreatorOrAdmin(IsCreatorOrAdminException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problemDetail.setTitle("User is ADMIN or creator");
+
+        return problemDetail;
+    }
 }
