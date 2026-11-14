@@ -72,4 +72,12 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{groupId}/admin/{newAdminId}")
+    public ResponseEntity<Void> addNewAdmin(@PathVariable Long groupId, @PathVariable Long newAdminId, @AuthenticationPrincipal Long userId){
+
+        groupService.addNewAdmin(groupId, newAdminId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
