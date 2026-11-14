@@ -72,10 +72,18 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{groupId}/admin/{newAdminId}")
+    @PostMapping("/{groupId}/admin/{newAdminId}/add")
     public ResponseEntity<Void> addNewAdmin(@PathVariable Long groupId, @PathVariable Long newAdminId, @AuthenticationPrincipal Long userId){
 
         groupService.addNewAdmin(groupId, newAdminId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{groupId}/admin/{oldAdminId}/quit")
+    public ResponseEntity<Void> quitAdmin(@PathVariable Long groupId, @PathVariable Long oldAdminId, @AuthenticationPrincipal Long userId){
+
+        groupService.quitAdmin(groupId, oldAdminId, userId);
 
         return ResponseEntity.noContent().build();
     }
