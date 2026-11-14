@@ -204,4 +204,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return problemDetail;
 
     }
+
+    @ExceptionHandler(UserIsAlreadyAdminException.class)
+    public ProblemDetail userIsAlreadyAdmin(UserIsAlreadyAdminException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("User is already ADMIN");
+        return problemDetail;
+    }
 }
