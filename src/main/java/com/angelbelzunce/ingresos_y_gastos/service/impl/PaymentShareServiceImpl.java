@@ -1,6 +1,7 @@
 package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.UserShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
@@ -36,6 +37,17 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         return paymentShareRepository.findByPaymentId(paymentId)
                 .stream()
                 .map(paymentShareMapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserShareResponse> findSharesByUserId(Long userId) {
+
+        List<PaymentShare> shares = paymentShareRepository.findByUserId(userId);
+
+        return shares.stream()
+                .map(paymentShareMapper::toUserSharesResponse)
+                .toList();
     }
 
     @Override

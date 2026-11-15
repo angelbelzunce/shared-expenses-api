@@ -1,10 +1,13 @@
 package com.angelbelzunce.ingresos_y_gastos.service;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.UserShareResponse;
 
 import java.util.List;
 
 public interface PaymentShareService {
+
+    List<UserShareResponse> findSharesByUserId(Long userId);
 
     List<PaymentShareResponse> findByPaymentId(Long paymentId);
 

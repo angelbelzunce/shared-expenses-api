@@ -52,7 +52,7 @@ public class InvitationServiceImpl implements InvitationService {
                 .orElseThrow(() -> new UserNotInGroupException(invitedBy.getId(), group.getId()));
         // Comprobamos si el usuario que invita es ADMIN
         if (!invitedByMember.getUserRole().equals(UserRole.ADMIN)){
-            throw new UserIsNotAdminException();
+            throw new UserIsNotAdminException(invitedById);
         }
 
         // Comprobamos que el usuario invitado no sea ya miembro del grupo

@@ -15,4 +15,6 @@ public interface GroupService {
     GroupResponse update(Long id, GroupRequest request, Long userId);
     void delete(Long id, Long userId);
     void leave(Long groupId, Long currentUserId);
+    void addNewAdmin(Long groupId, Long newAdminId, Long currentUserId);
+    void quitAdmin(Long groupId, Long oldAdminId, Long currentUserId);
 }

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -67,6 +68,7 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         Group group = groupMapper.toEntity(request);
+        group.setGroupOwner(user);
         Group savedGroup = groupRepository.save(group);
 
         GroupMember groupMember = new GroupMember();
@@ -92,7 +94,7 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new UserNotInGroupException(userId, id));
 
         if (!groupMember.getUserRole().equals(UserRole.ADMIN)){
-            throw new UserIsNotAdminException();
+            throw new UserIsNotAdminException(userId);
         }
 
         group.setName(request.name());
@@ -113,7 +115,7 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new UserNotInGroupException(userId, id));
 
         if (!groupMember.getUserRole().equals(UserRole.ADMIN)){
-            throw new UserIsNotAdminException();
+            throw new UserIsNotAdminException(userId);
         }
 
         groupRepository.delete(group);
@@ -123,11 +125,10 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public void leave(Long groupId, Long currentUserId) {
 
-        if(!groupRepository.existsById(groupId)){
-            throw new GroupNotFoundException(groupId);
-        }
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
 
-        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
+        GroupMember groupMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
                 .orElseThrow(() -> new UserNotInGroupException(currentUserId, groupId));
 
         List<GroupMember> memberList = groupMemberRepository.findByGroupId(groupId);
@@ -137,10 +138,100 @@ public class GroupServiceImpl implements GroupService {
             return;
         }
 
-        if (member.getUserRole().equals(UserRole.ADMIN)){
+        List<GroupMember> adminRoles = memberList
+                .stream()
+                .filter(member -> member.getUserRole().equals(UserRole.ADMIN))
+                .toList();
+
+        if (adminRoles.size() == 1 && groupMember.getUserRole().equals(UserRole.ADMIN)){
             throw new AdminCannotLeaveGroupException();
         }
 
-        groupMemberRepository.delete(member);
+        if (group.getGroupOwner().getId().equals(currentUserId)){
+
+            GroupMember nextOlderAdmin = adminRoles
+                    .stream()
+                    .filter(member -> !member.getUser().getId().equals(currentUserId))
+                    .min(Comparator.comparing(GroupMember::getJoinedAt))
+                    .orElseThrow(RuntimeException::new);
+
+
+            group.setGroupOwner(nextOlderAdmin.getUser());
+
+            groupRepository.save(group);
+        }
+
+
+
+        groupMemberRepository.delete(groupMember);
+    }
+
+    @Override
+    public void addNewAdmin(Long groupId, Long newAdminId, Long currentUserId) {
+
+        userRepository.findById(newAdminId)
+                .orElseThrow(() -> new UserNotFoundException(newAdminId));
+
+        userRepository.findById(currentUserId)
+                .orElseThrow(() -> new UserNotFoundException(currentUserId));
+
+        groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        GroupMember newAdminMember = groupMemberRepository.findByGroupIdAndUserId(groupId, newAdminId)
+                .orElseThrow(() -> new UserNotInGroupException(newAdminId, groupId));
+
+        if (newAdminMember.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsAlreadyAdminException(newAdminId);
+        }
+
+        GroupMember currentAdmin = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
+                .orElseThrow(() -> new UserNotInGroupException(currentUserId, groupId));
+
+        if (!currentAdmin.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsNotAdminException(currentUserId);
+        }
+
+        newAdminMember.setUserRole(UserRole.ADMIN);
+
+        groupMemberRepository.save(newAdminMember);
+
+    }
+
+    @Override
+    public void quitAdmin(Long groupId, Long oldAdminId, Long currentUserId) {
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException(groupId));
+
+        userRepository.findById(currentUserId)
+                .orElseThrow(() -> new UserNotFoundException(currentUserId));
+
+        GroupMember currentAdmin = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
+                .orElseThrow(() -> new UserNotInGroupException(currentUserId, groupId));
+
+        if (!currentAdmin.getUserRole().equals(UserRole.ADMIN)){
+            throw new UserIsNotAdminException(currentUserId);
+        }
+
+        userRepository.findById(oldAdminId)
+                .orElseThrow(() -> new UserNotFoundException(oldAdminId));
+
+        GroupMember oldAdminMember = groupMemberRepository.findByGroupIdAndUserId(groupId, oldAdminId)
+                .orElseThrow(() -> new UserNotInGroupException(oldAdminId, groupId));
+
+        if (group.getGroupOwner().getId().equals(oldAdminId)){
+
+            throw new IsCreatorOrAdminException(group.getGroupOwner().getId());
+        }
+
+        if (oldAdminMember.getUserRole().equals(UserRole.MEMBER)){
+            throw new MemberIsNotAdminException(oldAdminId);
+        }
+
+        oldAdminMember.setUserRole(UserRole.MEMBER);
+
+        groupMemberRepository.save(oldAdminMember);
+
     }
 }
