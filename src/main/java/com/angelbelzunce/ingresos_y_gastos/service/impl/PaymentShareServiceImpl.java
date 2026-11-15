@@ -69,7 +69,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         // If share has not PENDING status, cannot settle it
         if (!paymentShare.getStatus().equals(ShareStatus.PENDING)) {
-            throw new NotPendingShareException(paymentShare.getId());
+            throw new InvalidShareStatusException(paymentShare.getId(), ShareStatus.PENDING);
         }
 
         boolean isIncome = payment.getTransactionType().equals(TransactionType.INCOME);
@@ -101,7 +101,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         // If share has not SETTLED status, cannot reject it
         if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
-            throw new NotPendingShareException(paymentShare.getId());
+            throw new InvalidShareStatusException(paymentShare.getId(), ShareStatus.SETTLED);
         }
 
         paymentShare.setStatus(ShareStatus.PENDING);
@@ -120,7 +120,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         // If share has not SETTLED status, cannot confirm it
         if (!paymentShare.getStatus().equals(ShareStatus.SETTLED)) {
-            throw new NotPendingShareException(paymentShare.getId());
+            throw new InvalidShareStatusException(paymentShare.getId(), ShareStatus.SETTLED);
         }
 
         paymentShare.setStatus(ShareStatus.CONFIRMED);
@@ -145,7 +145,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         // If share has not CONFIRMED status, cannot undo it
         if (!paymentShare.getStatus().equals(ShareStatus.CONFIRMED)) {
-            throw new NotPendingShareException(paymentShare.getId());
+            throw new InvalidShareStatusException(paymentShare.getId(), ShareStatus.CONFIRMED);
         }
 
         paymentShare.setStatus(ShareStatus.PENDING);

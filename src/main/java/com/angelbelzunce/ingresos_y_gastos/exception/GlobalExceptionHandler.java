@@ -162,10 +162,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return problemDetail;
     }
 
-    @ExceptionHandler(NotPendingShareException.class)
-    public ProblemDetail notPendingShare(NotPendingShareException ex) {
+    @ExceptionHandler(InvalidShareStatusException.class)
+    public ProblemDetail invalidShareStatus(InvalidShareStatusException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
-        problemDetail.setTitle("Share status is not pending");
+        problemDetail.setTitle("Invalid share status");
         return problemDetail;
     }
 
