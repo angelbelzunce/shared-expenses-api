@@ -3,6 +3,7 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
 import com.angelbelzunce.ingresos_y_gastos.entity.User;
+import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import com.angelbelzunce.ingresos_y_gastos.exception.*;
@@ -18,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,26 +42,30 @@ public class PaymentShareServiceImplTest {
     private PaymentShareServiceImpl paymentShareServiceImpl;
 
     private Payment payment;
-    private User creator;
-    private User shareUser;
+    private User paymentCreator;
+    private User shareOwner;
+    private User outsider;
     private PaymentShare paymentShare;
 
     @BeforeEach
     public void setUp() {
 
-        creator = new User();
-        creator.setId(200L);
+        paymentCreator = new User();
+        paymentCreator.setId(200L);
 
-        shareUser = new User();
-        shareUser.setId(300L);
+        shareOwner = new User();
+        shareOwner.setId(300L);
+
+        outsider = new User();
+        outsider.setId(400L);
 
         payment = new Payment();
         payment.setId(10L);
-        payment.setUser(creator);
+        payment.setUser(paymentCreator);
         payment.setTransactionType(TransactionType.EXPENSE);
 
         paymentShare = new PaymentShare();
-        paymentShare.setUser(shareUser);
+        paymentShare.setUser(shareOwner);
         paymentShare.setStatus(ShareStatus.PENDING);
 
     }
@@ -74,120 +80,120 @@ public class PaymentShareServiceImplTest {
                     .thenReturn(Optional.empty());
 
             assertThrows(PaymentNotFoundException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
 
         @Test
-        public void settle_userNotInPayment_throwsUserNotInPaymentException() {
+        public void settle_userIsNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), outsider.getId()))
                     .thenReturn(false);
 
             assertThrows(UserNotInPaymentException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), outsider.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
 
         @Test
-        public void settle_paymentShareNotExists_throwsPaymentShareNotFoundException() {
+        public void settle_shareNotExists_throwsPaymentShareNotFoundException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
                     .thenReturn(true);
 
-            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.empty());
 
             assertThrows(PaymentShareNotFoundException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
 
             verify(paymentShareRepository, never()).save(any());
         }
 
         @Test
-        public void settle_paymentShareIsNotPending_throwsNotPendingShareException() {
+        public void settle_shareIsNotPending_throwsInvalidShareStatusException() {
 
             paymentShare.setStatus(ShareStatus.SETTLED);
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
                     .thenReturn(true);
 
-            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
-            assertThrows(NotPendingShareException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+            assertThrows(InvalidShareStatusException.class,
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
 
         @Test
-        public void settle_isNotCreatorOfThisIncome_throwsIsNotShareCreatorException() {
+        public void settle_userIsNotCreatorOfThisIncome_throwsIsNotShareCreatorException() {
 
             payment.setTransactionType(TransactionType.INCOME);
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(true);
 
-            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
             assertThrows(IsNotShareCreatorException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId()));
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), shareOwner.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
 
         @Test
-        public void settle_isNotOwnerOfThisExpense_throwsIsNotShareOwnerException() {
+        public void settle_userIsNotOwnerOfThisExpense_throwsIsNotShareOwnerException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), creator.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
                     .thenReturn(true);
 
-            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
             assertThrows(IsNotShareOwnerException.class,
-                    () -> paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), creator.getId()));
+                    () -> paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
 
         @Test
-        public void settle_setShareStatusSettled() {
+        public void settle_shareIsSettled() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(true);
 
-            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
-            paymentShareServiceImpl.settle(payment.getId(), shareUser.getId(), shareUser.getId());
+            paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), shareOwner.getId());
 
             verify(paymentShareRepository, times(1)).save(paymentShare);
 
@@ -200,19 +206,135 @@ public class PaymentShareServiceImplTest {
 
     @Nested
     public class RejectSettle {
+
         @Test
-        public void rejectSettle_userNotInPayment_throwsUserNotInPaymentException() {
+        public void rejectSettle_paymentNotExists_throwsPaymentNotFoundException() {
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(PaymentNotFoundException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void rejectSettle_userIsNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), outsider.getId()))
                     .thenReturn(false);
 
             assertThrows(UserNotInPaymentException.class,
-                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), outsider.getId()));
 
             verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void rejectSettle_paymentShareNotExists_throwsPaymentShareNotFoundException() {
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(PaymentShareNotFoundException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+        }
+
+        @Test
+        public void rejectSettle_userIsNotExpenseShareCreator_throwsIsNotShareCreatorException(){
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(IsNotShareCreatorException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), shareOwner.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void rejectSettle_userIsNotIncomeShareOwner_throwsIsNotShareOwnerException(){
+
+            payment.setTransactionType(TransactionType.INCOME);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(IsNotShareOwnerException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+
+        @Test
+        public void rejectSettle_shareIsNotSettled_throwsInvalidShareStatusException(){
+
+            paymentShare.setStatus(ShareStatus.PENDING);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(InvalidShareStatusException.class,
+                    () -> paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void rejectSettle_shareStatusIsPending(){
+
+            paymentShare.setStatus(ShareStatus.SETTLED);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId());
+
+            assertEquals(ShareStatus.PENDING, paymentShare.getStatus());
+
+            verify(paymentShareRepository, times(1)).save(any());
 
         }
     }
@@ -221,20 +343,168 @@ public class PaymentShareServiceImplTest {
     public class ConfirmSettle {
 
         @Test
+        public void confirmSettle_paymentNotExists_throwsPaymentNotFoundException() {
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(PaymentNotFoundException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
         public void confirmSettle_userNotInPayment_throwsUserNotInPaymentException() {
 
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), outsider.getId()))
                     .thenReturn(false);
 
             assertThrows(UserNotInPaymentException.class,
-                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareUser.getId(), shareUser.getId()));
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), outsider.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
         }
+
+        @Test
+        public void confirmSettle_shareNotFound_throwsPaymentShareNotFoundException(){
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(PaymentShareNotFoundException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void confirmSettle_userIsNotShareCreator_throwsIsNotShareCreatorException(){
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(IsNotShareCreatorException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void confirmSettle_userIsNotShareOwner_throwsIsNotShareOwnerException(){
+
+            payment.setTransactionType(TransactionType.INCOME);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), paymentCreator.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(IsNotShareOwnerException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void confirmSettle_shareIsNotSettled_throwsInvalidShareStatusException(){
+
+            payment.setTransactionType(TransactionType.INCOME);
+            paymentShare.setStatus(ShareStatus.PENDING);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            assertThrows(InvalidShareStatusException.class,
+                    () -> paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId()));
+
+            verify(paymentShareRepository, never()).save(any());
+
+        }
+
+        @Test
+        public void confirmSettle_shareIsConfirmed(){
+
+            payment.setTransactionType(TransactionType.INCOME);
+            paymentShare.setStatus(ShareStatus.SETTLED);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId());
+
+            assertEquals(ShareStatus.CONFIRMED, paymentShare.getStatus());
+
+            verify(paymentShareRepository, times(1)).save(any());
+
+        }
+
+        @Test
+        public void confirmSettle_allSharesConfirmed_setsPaymentPaid(){
+
+            payment.setTransactionType(TransactionType.INCOME);
+            paymentShare.setStatus(ShareStatus.SETTLED);
+
+            PaymentShare creatorShare = new PaymentShare();
+            creatorShare.setUser(paymentCreator);
+            creatorShare.setStatus(ShareStatus.CONFIRMED);
+
+            when(paymentRepository.findById(payment.getId()))
+                    .thenReturn(Optional.of(payment));
+
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(true);
+
+            when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
+                    .thenReturn(Optional.of(paymentShare));
+
+            when(paymentShareRepository.findByPaymentId(payment.getId()))
+                    .thenReturn(List.of(creatorShare, paymentShare));
+
+            paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId());
+
+            assertEquals(PaymentStatus.PAID, payment.getPaymentStatus());
+
+            verify(paymentRepository, times(1)).save(payment);
+
+        }
+
     }
 
     @Nested
@@ -246,11 +516,11 @@ public class PaymentShareServiceImplTest {
             when(paymentRepository.findById(payment.getId()))
                     .thenReturn(Optional.of(payment));
 
-            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), shareUser.getId()))
+            when(paymentShareRepository.existsByPaymentIdAndUserId(payment.getId(), outsider.getId()))
                     .thenReturn(false);
 
             assertThrows(UserNotInPaymentException.class,
-                    () -> paymentShareServiceImpl.undoConfirmedShare(payment.getId(), shareUser.getId(), shareUser.getId()));
+                    () -> paymentShareServiceImpl.undoConfirmedShare(payment.getId(), shareOwner.getId(), outsider.getId()));
 
             verify(paymentShareRepository, never()).save(any());
 
