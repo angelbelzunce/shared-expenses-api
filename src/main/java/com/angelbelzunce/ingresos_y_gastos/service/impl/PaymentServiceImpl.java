@@ -149,7 +149,7 @@ public class PaymentServiceImpl implements PaymentService {
         List<PaymentShare> shares = shareRepository.findByPaymentId(payment.getId());
 
         shares.forEach(paymentShare -> {
-            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(userId))
+            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(payment.getUser().getId()))
                 throw new PaymentWithNotPendingSharesException(payment.getId());
         });
 
@@ -210,7 +210,7 @@ public class PaymentServiceImpl implements PaymentService {
         List<PaymentShare> shares = shareRepository.findByPaymentId(paymentId);
 
         shares.forEach(paymentShare -> {
-            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(userId))
+            if (!paymentShare.getStatus().equals(ShareStatus.PENDING) && !paymentShare.getUser().getId().equals(payment.getUser().getId()))
                 throw new PaymentWithNotPendingSharesException(paymentId);
         });
 
