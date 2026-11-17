@@ -14,6 +14,7 @@ public class PaymentMapper {
         payment.setDescription(paymentRequest.description());
         payment.setAmount(paymentRequest.amount());
         payment.setTransactionType(paymentRequest.transactionType());
+        payment.setShareType(paymentRequest.shareType());
 
         return payment;
     }
@@ -28,6 +29,8 @@ public class PaymentMapper {
                 payment.getPaymentStatus(),
                 payment.getTransactionType(),
                 payment.getUser().getId(),
-                payment.getGroup().getId());
+                payment.getGroup().getId(),
+                payment.getShareType());
+
     }
 }

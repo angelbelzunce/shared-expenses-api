@@ -1,6 +1,7 @@
 package com.angelbelzunce.ingresos_y_gastos.entity;
 
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
+import com.angelbelzunce.ingresos_y_gastos.enums.ShareType;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter @Setter
 @AllArgsConstructor
@@ -39,4 +41,7 @@ public class Payment {
     @JoinColumn(name = "group_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Group group;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ShareType shareType;
 }

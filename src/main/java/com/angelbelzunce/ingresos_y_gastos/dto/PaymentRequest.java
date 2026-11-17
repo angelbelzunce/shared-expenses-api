@@ -1,7 +1,8 @@
 package com.angelbelzunce.ingresos_y_gastos.dto;
 
-import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
+import com.angelbelzunce.ingresos_y_gastos.enums.ShareType;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -22,7 +23,9 @@ public record PaymentRequest(
         @NotNull
         Long groupId,
         @NotNull
-        List<Long> shareUsersId
+        List<@Valid ShareRequest> shares,
+        @NotNull
+        ShareType shareType
 
 ) {
 }
