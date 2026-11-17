@@ -141,6 +141,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return problemDetail;
     }
 
+    @ExceptionHandler(InvalidShareAmountsException.class)
+    public ProblemDetail invalidShareAmounts(InvalidShareAmountsException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Invalid share amounts");
+        return problemDetail;
+    }
+
     @ExceptionHandler(PaymentShareNotFoundException.class)
     public ProblemDetail paymentShareNotFound(PaymentShareNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

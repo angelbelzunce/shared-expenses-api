@@ -2,9 +2,11 @@ package com.angelbelzunce.ingresos_y_gastos.service.impl;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.ShareRequest;
 import com.angelbelzunce.ingresos_y_gastos.entity.*;
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
+import com.angelbelzunce.ingresos_y_gastos.enums.ShareType;
 import com.angelbelzunce.ingresos_y_gastos.enums.UserRole;
 import com.angelbelzunce.ingresos_y_gastos.exception.*;
 import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentMapper;
@@ -56,15 +58,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse create(PaymentRequest request, Long userId) {
 
-        if (request.shareUsersId().contains(userId)) {
-            throw new CreatorInShareUsersException();
-        }
-
-        Set<Long> shareUserSet = new HashSet<>(request.shareUsersId());
-
-        if (request.shareUsersId().size() != shareUserSet.size()) {
-            throw new DuplicatedShareUserException();
-        }
+        validateShares(request, userId);
 
         Payment payment = paymentMapper.toEntity(request);
 
@@ -76,16 +70,16 @@ public class PaymentServiceImpl implements PaymentService {
             throw new UserNotInGroupException(user.getId(), group.getId());
         }
 
-        for (Long shareUserId : request.shareUsersId()) {
-            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)) {
-                throw new UserNotInGroupException(shareUserId, group.getId());
+        for (ShareRequest shareRequest : request.shares()) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareRequest.id())) {
+                throw new UserNotInGroupException(shareRequest.id(), group.getId());
             }
         }
 
         payment.setUser(user);
         payment.setGroup(group);
 
-        if (request.shareUsersId().isEmpty()) {
+        if (request.shares().isEmpty()) {
             payment.setPaymentStatus(PaymentStatus.PAID);
         } else {
             payment.setPaymentStatus(PaymentStatus.PENDING);
@@ -93,30 +87,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment saved = paymentRepository.save(payment);
 
-        int shareUsers = request.shareUsersId().size() + 1;
-        BigDecimal shareAmount = request.amount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+        createShares(saved, user, request);
 
-        PaymentShare paymentShare;
-        for (Long shareUserId : request.shareUsersId()) {
-            paymentShare = new PaymentShare();
-            paymentShare.setPayment(saved);
-            paymentShare.setUser(userRepository.findById(shareUserId).orElseThrow(() -> new UserNotFoundException(shareUserId)));
-            paymentShare.setAmount(shareAmount);
-            paymentShare.setStatus(ShareStatus.PENDING);
-            shareRepository.save(paymentShare);
-        }
-
-        PaymentShare paymentShareCreator = new PaymentShare();
-        paymentShareCreator.setPayment(saved);
-        paymentShareCreator.setUser(user);
-        BigDecimal amountShareCreator = request.amount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
-        paymentShareCreator.setAmount(amountShareCreator);
-        paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
-        paymentShareCreator.setPaidAt(LocalDateTime.now());
-        shareRepository.save(paymentShareCreator);
-
-        return paymentMapper.toResponse(payment);
-
+        return paymentMapper.toResponse(saved);
     }
 
     @Override
@@ -127,19 +100,11 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
-        if (request.shareUsersId().contains(payment.getUser().getId())) {
-            throw new CreatorInShareUsersException();
-        }
+        validateShares(request, payment.getUser().getId());
 
-        Set<Long> shareUserSet = new HashSet<>(request.shareUsersId());
-
-        if (request.shareUsersId().size() != shareUserSet.size()) {
-            throw new DuplicatedShareUserException();
-        }
-
-        for (Long shareUserId : request.shareUsersId()) {
-            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareUserId)) {
-                throw new UserNotInGroupException(shareUserId, request.groupId());
+        for (ShareRequest shareRequest : request.shares()) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(request.groupId(), shareRequest.id())) {
+                throw new UserNotInGroupException(shareRequest.id(), request.groupId());
             }
         }
 
@@ -158,8 +123,9 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setDescription(request.description());
         payment.setAmount(request.amount());
         payment.setTransactionType(request.transactionType());
+        payment.setShareType(request.shareType());
 
-        if (request.shareUsersId().isEmpty()) {
+        if (request.shares().isEmpty()) {
             payment.setPaymentStatus(PaymentStatus.PAID);
         } else {
             payment.setPaymentStatus(PaymentStatus.PENDING);
@@ -167,36 +133,80 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        // Calculate new share amount
-        int shareUsers = request.shareUsersId().size() + 1;
-        BigDecimal shareAmount = request.amount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
-
         // Delete old payments share
         shareRepository.deleteByPaymentId(payment.getId());
         shareRepository.flush();
 
         // Create new payment shares from request
-        PaymentShare paymentShare;
-        for (Long shareUserId : request.shareUsersId()) {
-            paymentShare = new PaymentShare();
-            paymentShare.setPayment(savedPayment);
-            paymentShare.setUser(userRepository.findById(shareUserId).orElseThrow(() -> new UserNotFoundException(shareUserId)));
-            paymentShare.setAmount(shareAmount);
-            paymentShare.setStatus(ShareStatus.PENDING);
-            shareRepository.save(paymentShare);
-        }
-
-        PaymentShare paymentShareCreator = new PaymentShare();
-        paymentShareCreator.setPayment(savedPayment);
-        paymentShareCreator.setUser(payment.getUser());
-        BigDecimal amountShareCreator = request.amount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
-        paymentShareCreator.setAmount(amountShareCreator);
-        paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
-        paymentShareCreator.setPaidAt(LocalDateTime.now());
-        shareRepository.save(paymentShareCreator);
+        createShares(savedPayment, payment.getUser(), request);
 
         // Save updated Payment and return response
         return paymentMapper.toResponse(savedPayment);
+    }
+
+    // Checks the share users and, in AMOUNTS mode, their amounts
+    private void validateShares(PaymentRequest request, Long creatorId) {
+
+        Set<Long> shareUserIds = new HashSet<>();
+
+        for (ShareRequest shareRequest : request.shares()) {
+            if (shareRequest.id().equals(creatorId)) {
+                throw new CreatorInShareUsersException();
+            }
+            if (!shareUserIds.add(shareRequest.id())) {
+                throw new DuplicatedShareUserException();
+            }
+        }
+
+        if (request.shareType().equals(ShareType.AMOUNTS)) {
+
+            BigDecimal sharesTotal = BigDecimal.ZERO;
+
+            for (ShareRequest shareRequest : request.shares()) {
+                if (shareRequest.amount() == null) {
+                    throw new InvalidShareAmountsException("Every share needs an amount when the share type is AMOUNTS");
+                }
+                sharesTotal = sharesTotal.add(shareRequest.amount());
+            }
+
+            if (sharesTotal.compareTo(request.amount()) > 0) {
+                throw new InvalidShareAmountsException("The shares add up to " + sharesTotal + ", more than the payment amount " + request.amount());
+            }
+        }
+    }
+
+    // Creates one PENDING share per share user and the creator's CONFIRMED share with the remainder
+    private void createShares(Payment payment, User creator, PaymentRequest request) {
+
+        boolean isEquals = request.shareType().equals(ShareType.EQUALS);
+
+        int shareUsers = request.shares().size() + 1;
+        BigDecimal equalsShareAmount = request.amount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+
+        BigDecimal sharesTotal = BigDecimal.ZERO;
+
+        PaymentShare paymentShare;
+        for (ShareRequest shareRequest : request.shares()) {
+            BigDecimal amount = isEquals ? equalsShareAmount : shareRequest.amount();
+
+            paymentShare = new PaymentShare();
+            paymentShare.setPayment(payment);
+            paymentShare.setUser(userRepository.findById(shareRequest.id()).orElseThrow(() -> new UserNotFoundException(shareRequest.id())));
+            paymentShare.setAmount(amount);
+            paymentShare.setStatus(ShareStatus.PENDING);
+            shareRepository.save(paymentShare);
+
+            sharesTotal = sharesTotal.add(amount);
+        }
+
+        // The creator keeps the remainder: rounding cents in EQUALS mode, the rest of the amount in AMOUNTS mode
+        PaymentShare paymentShareCreator = new PaymentShare();
+        paymentShareCreator.setPayment(payment);
+        paymentShareCreator.setUser(creator);
+        paymentShareCreator.setAmount(request.amount().subtract(sharesTotal));
+        paymentShareCreator.setStatus(ShareStatus.CONFIRMED);
+        paymentShareCreator.setPaidAt(LocalDateTime.now());
+        shareRepository.save(paymentShareCreator);
     }
 
     @Override
@@ -248,18 +258,30 @@ public class PaymentServiceImpl implements PaymentService {
         shareList.removeIf(share -> share.getUser().getId().equals(currentUserId));
         shareRepository.delete(optionalShare.get());
 
-        // Calculate new share amount
-        int shareUsers = shareList.size();
-        BigDecimal shareAmount = payment.getAmount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+        if (payment.getShareType().equals(ShareType.AMOUNTS)) {
 
-        BigDecimal amountShareCreator = payment.getAmount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
+            // Exact amounts: the others keep theirs and the leaver's amount goes to the creator
+            shareList.forEach(share -> {
+                if (share.getUser().getId().equals(payment.getUser().getId())) {
+                    share.setAmount(share.getAmount().add(optionalShare.get().getAmount()));
+                }
+            });
 
-        shareList.forEach(share ->
-        {
-            share.setAmount(shareAmount);
-            if (share.getUser().getId().equals(payment.getUser().getId())) share.setAmount(amountShareCreator);
+        } else {
 
-        });
+            // Equal parts: calculate new share amount
+            int shareUsers = shareList.size();
+            BigDecimal shareAmount = payment.getAmount().divide(BigDecimal.valueOf(shareUsers), 2, RoundingMode.HALF_UP);
+
+            BigDecimal amountShareCreator = payment.getAmount().subtract(shareAmount.multiply(BigDecimal.valueOf((shareUsers - 1))));
+
+            shareList.forEach(share ->
+            {
+                share.setAmount(shareAmount);
+                if (share.getUser().getId().equals(payment.getUser().getId())) share.setAmount(amountShareCreator);
+
+            });
+        }
 
         if (shareList.size() == 1) {
             payment.setPaymentStatus(PaymentStatus.PAID);
