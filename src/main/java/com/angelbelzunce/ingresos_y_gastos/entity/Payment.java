@@ -14,7 +14,6 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter @Setter
 @AllArgsConstructor
@@ -29,6 +28,7 @@ public class Payment {
     private String description;
     private BigDecimal amount;
     @CreationTimestamp
+    @Column(nullable = false)
     private LocalDateTime createdAt;
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
