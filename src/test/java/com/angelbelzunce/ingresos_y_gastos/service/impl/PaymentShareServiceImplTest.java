@@ -11,6 +11,7 @@ import com.angelbelzunce.ingresos_y_gastos.mapper.PaymentShareMapper;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
+import com.angelbelzunce.ingresos_y_gastos.service.ShareHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ public class PaymentShareServiceImplTest {
     private UserRepository userRepository;
     @Mock
     private PaymentShareMapper paymentShareMapper;
+    @Mock
+    private ShareHistoryService historyService;
 
     @InjectMocks
     private PaymentShareServiceImpl paymentShareServiceImpl;
@@ -193,12 +196,20 @@ public class PaymentShareServiceImplTest {
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
+            when(paymentShareRepository.save(paymentShare))
+                    .thenReturn(paymentShare);
+
+            when(userRepository.getReferenceById(shareOwner.getId()))
+                    .thenReturn(shareOwner);
+
             paymentShareServiceImpl.settle(payment.getId(), shareOwner.getId(), shareOwner.getId());
 
             verify(paymentShareRepository, times(1)).save(paymentShare);
 
             assertEquals(ShareStatus.SETTLED, paymentShare.getStatus());
             assertNotNull(paymentShare.getPaidAt());
+
+            verify(historyService, times(1)).create(paymentShare, shareOwner, ShareStatus.PENDING, ShareStatus.SETTLED);
 
         }
 
@@ -330,11 +341,19 @@ public class PaymentShareServiceImplTest {
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
+            when(paymentShareRepository.save(paymentShare))
+                    .thenReturn(paymentShare);
+
+            when(userRepository.getReferenceById(paymentCreator.getId()))
+                    .thenReturn(paymentCreator);
+
             paymentShareServiceImpl.rejectSettle(payment.getId(), shareOwner.getId(), paymentCreator.getId());
 
             assertEquals(ShareStatus.PENDING, paymentShare.getStatus());
 
             verify(paymentShareRepository, times(1)).save(any());
+
+            verify(historyService, times(1)).create(paymentShare, paymentCreator, ShareStatus.SETTLED, ShareStatus.PENDING);
 
         }
     }
@@ -467,11 +486,19 @@ public class PaymentShareServiceImplTest {
             when(paymentShareRepository.findByPaymentIdAndUserId(payment.getId(), shareOwner.getId()))
                     .thenReturn(Optional.of(paymentShare));
 
+            when(paymentShareRepository.save(paymentShare))
+                    .thenReturn(paymentShare);
+
+            when(userRepository.getReferenceById(shareOwner.getId()))
+                    .thenReturn(shareOwner);
+
             paymentShareServiceImpl.confirmSettle(payment.getId(), shareOwner.getId(), shareOwner.getId());
 
             assertEquals(ShareStatus.CONFIRMED, paymentShare.getStatus());
 
             verify(paymentShareRepository, times(1)).save(any());
+
+            verify(historyService, times(1)).create(paymentShare, shareOwner, ShareStatus.SETTLED, ShareStatus.CONFIRMED);
 
         }
 

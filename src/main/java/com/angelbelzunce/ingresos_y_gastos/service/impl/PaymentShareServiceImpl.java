@@ -4,6 +4,7 @@ import com.angelbelzunce.ingresos_y_gastos.dto.PaymentShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.dto.UserShareResponse;
 import com.angelbelzunce.ingresos_y_gastos.entity.Payment;
 import com.angelbelzunce.ingresos_y_gastos.entity.PaymentShare;
+import com.angelbelzunce.ingresos_y_gastos.entity.User;
 import com.angelbelzunce.ingresos_y_gastos.enums.PaymentStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.ShareStatus;
 import com.angelbelzunce.ingresos_y_gastos.enums.TransactionType;
@@ -13,6 +14,7 @@ import com.angelbelzunce.ingresos_y_gastos.repository.PaymentRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.PaymentShareRepository;
 import com.angelbelzunce.ingresos_y_gastos.repository.UserRepository;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentShareService;
+import com.angelbelzunce.ingresos_y_gastos.service.ShareHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final PaymentShareMapper paymentShareMapper;
+    private final ShareHistoryService historyService;
 
     @Override
     public List<PaymentShareResponse> findByPaymentId(Long paymentId) {
@@ -60,6 +63,7 @@ public class PaymentShareServiceImpl implements PaymentShareService {
     }
 
     @Override
+    @Transactional
     public PaymentShareResponse settle(Long paymentId, Long shareUserId, Long currentUserId) {
 
         Payment payment = getPaymentForParticipant(paymentId, currentUserId);
@@ -89,10 +93,17 @@ public class PaymentShareServiceImpl implements PaymentShareService {
         paymentShare.setStatus(ShareStatus.SETTLED);
         paymentShare.setPaidAt(LocalDateTime.now());
 
-        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+        PaymentShare savedShare = paymentShareRepository.save(paymentShare);
+
+        User actingUser = userRepository.getReferenceById(currentUserId);
+
+        historyService.create(savedShare, actingUser, ShareStatus.PENDING, ShareStatus.SETTLED);
+
+        return paymentShareMapper.toResponse(savedShare);
     }
 
     @Override
+    @Transactional
     public PaymentShareResponse rejectSettle(Long paymentId, Long shareUserId, Long currentUserId) {
 
         Payment payment = getPaymentForParticipant(paymentId, currentUserId);
@@ -106,7 +117,13 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         paymentShare.setStatus(ShareStatus.PENDING);
 
-        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+        User actingUser = userRepository.getReferenceById(currentUserId);
+
+        PaymentShare savedShare = paymentShareRepository.save(paymentShare);
+
+        historyService.create(savedShare, actingUser, ShareStatus.SETTLED, ShareStatus.PENDING);
+
+        return paymentShareMapper.toResponse(savedShare);
 
     }
 
@@ -127,7 +144,13 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         updatePaymentStatus(payment);
 
-        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+        User actingUser = userRepository.getReferenceById(currentUserId);
+
+        PaymentShare savedShare = paymentShareRepository.save(paymentShare);
+
+        historyService.create(savedShare, actingUser, ShareStatus.SETTLED, ShareStatus.CONFIRMED);
+
+        return paymentShareMapper.toResponse(savedShare);
 
     }
 
@@ -152,7 +175,13 @@ public class PaymentShareServiceImpl implements PaymentShareService {
 
         updatePaymentStatus(payment);
 
-        return paymentShareMapper.toResponse(paymentShareRepository.save(paymentShare));
+        User actingUser = userRepository.getReferenceById(currentUserId);
+
+        PaymentShare savedShare = paymentShareRepository.save(paymentShare);
+
+        historyService.create(savedShare, actingUser, ShareStatus.CONFIRMED, ShareStatus.PENDING);
+
+        return paymentShareMapper.toResponse(savedShare);
 
     }
 
