@@ -2,7 +2,9 @@ package com.angelbelzunce.ingresos_y_gastos.controller;
 
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentRequest;
 import com.angelbelzunce.ingresos_y_gastos.dto.PaymentResponse;
+import com.angelbelzunce.ingresos_y_gastos.dto.ShareHistoryResponse;
 import com.angelbelzunce.ingresos_y_gastos.service.PaymentService;
+import com.angelbelzunce.ingresos_y_gastos.service.ShareHistoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,10 +20,16 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final ShareHistoryService historyService;
 
     @GetMapping("/{id}")
     public ResponseEntity<PaymentResponse> findById(@PathVariable Long id){
         return ResponseEntity.ok(paymentService.findById(id));
+    }
+
+    @GetMapping("/{paymentId}/history")
+    public ResponseEntity<List<ShareHistoryResponse>> findAllByPayment(@PathVariable Long paymentId, @AuthenticationPrincipal Long userId){
+        return ResponseEntity.ok(historyService.findHistoryByPayment(paymentId, userId));
     }
 
     @PostMapping
