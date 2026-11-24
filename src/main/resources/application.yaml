@@ -5,6 +5,11 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ingresos_y_gastos_db}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      # Sin conexiones fijas: si nadie usa la app, el pool se vacía y Neon puede apagarse (scale to zero).
+      minimum-idle: 0
+      # Cierra cada conexión tras 1 minuto sin usarse.
+      idle-timeout: 60000
   jpa:
     hibernate:
       # Flyway crea y cambia las tablas; Hibernate solo comprueba que coinciden con las entidades.
